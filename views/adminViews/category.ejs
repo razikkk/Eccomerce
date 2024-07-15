@@ -1,0 +1,195 @@
+<%- include('../layout/adminlayout/header')-%>
+
+    <div class="col-lg-10 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Hoverable Table</h4>
+
+                <p class="card-description"> <code>Category Details</code>
+                    <button style="margin-left: 670px; margin-top: 20px; border: none;" class="badge badge-dark"
+                        onclick="location.href='/admin/category/addCategory'">Add
+                        Categories</button>
+                    <button style="margin-left: 800px; margin-top: 20px;  border :none; "
+                        class="badge badge-danger" onclick="location.href='/admin/category/deletedCategory'">Deleted
+                        Categories</button>
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% category.forEach(category=>{ %>
+                                <tr>
+                                    <td style="color: white;">
+                                        <%= category.categoryName %>
+                                    </td>
+                                    <td><button class="badge badge-dark border-0 "
+                                            id="openEditModalBtn_<%= category._id %>">Edit</button> <a href="#"
+                                            class="btn btn-danger btn-sm"
+                                            onclick="confirmDelete('<%= category._id %>')">Delete</a>
+                                    </td>
+                                    <div id="categoryEditModal_<%= category._id %>" class="modal">
+                                        <div class="modal-content">
+                                            <span class="close text-end">&times;</span>
+                                            <h3 class="mb-3 text-center">Edit Category</h3>
+                                            <div id="messagerContainer_<%= category._id %>" class="message-container">
+                                            </div>
+                                            <form id="categoryEditForm_<%= category._id %>"
+                                                action="/admin/category/edit" method="post">
+                                                <div class="form-group mb-3">
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <label for="categoryName">Category Name<span
+                                                                    style="color: red;">*</span></label>
+                                                            <input type="text" id="editCategoryName"
+                                                                value="<%= category.categoryName %>"
+                                                                class="form-control" name="categoryName">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" value="<%= category._id %>" name="categoryId"
+                                                    class="form-control">
+                                                <div class="text-center">
+                                                    <button class="btn btn-primary" type="submit">Submit</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </tr>
+
+                                <%})%>
+
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #070707;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: rgb(250, 247, 247);
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            //const aModal = document.getElementById('categoryAddModal');
+            const eModals = document.querySelectorAll('[id^=categoryEditModal]');
+            //const aBtn = document.getElementById('openAddModalBtn');
+            const eBtns = document.querySelectorAll('[id^=openEditModalBtn]');
+            //const aCloseBtn = aModal.querySelector('.close');
+            const eCloseBtns = document.querySelectorAll('[id^=categoryEditModal] .close');
+            const sidebar = document.getElementById('sidebar');
+
+            //aBtn.onclick = () => aModal.style.display = 'block';
+
+            eBtns.forEach((btn, index) => {
+                btn.onclick = () => eModals[index].style.display = 'block';
+            });
+
+            //aCloseBtn.onclick = () => aModal.style.display = 'none';
+
+            eCloseBtns.forEach((btn) => {
+                btn.onclick = () => btn.closest('.modal').style.display = 'none';
+            });
+
+            window.onclick = (event) => {
+                //if (event.target == aModal) {
+                //     aModal.style.display = 'none';
+                // }
+                eModals.forEach((modal) => {
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+
+            sidebar.onclick = () => {
+                aModal.style.display = 'none';
+                eModals.forEach(modal => modal.style.display = 'none');
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        function confirmDelete(categoryId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This category will get deleted',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Sending delete request to the controller
+                    axios.delete(`/admin/category/deleteCategory/?id=${categoryId}`)
+                        .then((response) => {
+                            // Checking success
+                            if (response.data.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    'Your category has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    'Failed to delete the category.',
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting the category:', error);
+                            Swal.fire(
+                                'Error!',
+                                'An error occurred while deleting the category.',
+                                'error'
+                            );
+                        });
+                }
+            });
+        }
+    </script>
+    

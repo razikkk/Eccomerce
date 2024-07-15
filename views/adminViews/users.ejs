@@ -1,0 +1,150 @@
+<%- include('../layout/adminlayout/header')-%>
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Striped Table</h4>
+                <p class="card-description"> Add class <code>.table-striped</code>
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th> User </th>
+                                <th> First name </th>
+                                <th> Progress </th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for(let i=0;i<users.length;i++){%>
+                                <tr>
+                                    <td class="py-1">
+                                        <span style="color: white;">
+                                            <%=i+1%>.
+                                        </span>
+                                    </td>
+                                    <td style="color: white;">
+                                        <%=users[i].name%>
+                                    </td>
+                                    <td>
+                                        <% if (users[i].is_blocked) { %>
+                                            <button onclick="unblock('<%=users[i]._id%>')" class="badge badge-success">UNBLOCK</button>
+
+                                            <% } else { %>
+                                                <button  onclick="block('<%=users[i]._id%>')" class="badge badge-danger">BLOCK</button>
+                                                <% } %>
+                                    </td>
+                                </tr>
+                                <%}%>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        async function block(userId) {
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: "btn btn-success",
+                    cancelButton: "btn btn-danger"
+                },
+                buttonsStyling: true
+            });
+
+            swalWithBootstrapButtons.fire({
+                title: "Are you sure?",
+                text: "Do You want To Block This User!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Block User !",
+                cancelButtonText: "Cancel!",
+                reverseButtons: true
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const response = await fetch(`/admin/blockUser?userId=${userId}`, {
+                        method: 'PUT'
+                    });
+                    swalWithBootstrapButtons.fire({
+                        title: "Deleted!",
+                        text: "User has been Blocked",
+                        icon: "success"
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Cancelled",
+                        text: "User not Blocked :)",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
+        async function unblock(userId) {
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: "btn btn-success",
+                    cancelButton: "btn btn-danger"
+                },
+                buttonsStyling: true
+            });
+
+            swalWithBootstrapButtons.fire({
+                title: "Are you sure?",
+                text: "Do You want To UnBlock This User!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Unblock User!",
+                cancelButtonText: " cancel!",
+                reverseButtons: true
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/admin/unblockUser?userId=${userId}`, {
+                            method: 'PUT'
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            swalWithBootstrapButtons.fire({
+                                title: "Unblocked!",
+                                text: "The user has been unblocked.",
+                                icon: "success"
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            swalWithBootstrapButtons.fire({
+                                title: "Error!",
+                                text: "There was an error unblocking the user.",
+                                icon: "error"
+                            });
+                        }
+                    } catch (error) {
+                        swalWithBootstrapButtons.fire({
+                            title: "Error!",
+                            text: "There was an error unblocking the user.",
+                            icon: "error"
+                        });
+                    }
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Cancelled",
+                        text: "The user is still blocked.",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>

@@ -1,0 +1,478 @@
+<%- include('../layout/userlayout/header') -%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Management</title>
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"> -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+            font-family: Arial, sans-serif;
+        }
+        .address-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .address-box {
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn-add {
+            background-color: #212529;
+            color: #fff;
+        }
+        .btn-edit {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .modal-header, .modal-footer {
+            background-color: #fff;
+            color: #212529;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content {
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .modal-body {
+            padding: 30px;
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .form-control {
+            border-radius: 5px;
+        }
+        .btn-close {
+            color: #000;
+            opacity: 1;
+        }
+        #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #333; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+        
+        
+    </style>
+</head>
+<body>
+    <div class="container address-container">
+        <h2 class="text-center mb-4">Manage Your Addresses</h2>
+        <div class="d-flex justify-content-end mb-4">
+            <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addAddressModal">Add Address</button>
+        </div>
+
+        <% if (addresses && addresses.length > 0) { %>
+            <div id="addressesContainer">
+                <% for (let i = 0; i < addresses.length; i++) { 
+                    const address = addresses[i]; %>
+                    <div class="address-box" data-address-id="<%= address._id %>">
+                        <p><strong>Name:</strong> <%= address.name %></p>
+                        <p><strong>Street:</strong> <%= address.street %></p>
+                        <p><strong>City:</strong> <%= address.city %></p>
+                        <p><strong>State:</strong> <%= address.state %></p>
+                        <p><strong>ZIP Code:</strong> <%= address.zipcode %></p>
+                        <p><strong>Mobile:</strong> <%= address.mobile %></p>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editAddressModal-<%= address._id %>">Edit</button>
+                            <button class="btn btn-delete" onclick="confirmDelete('<%= address._id %>')">Delete</button>
+                        </div>
+                    </div>
+
+                    <!-- Edit Address Modal -->
+                    <div class="modal fade" id="editAddressModal-<%= address._id %>" tabindex="-1" aria-labelledby="editAddressModalLabel-<%= address._id %>" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editAddressModalLabel-<%= address._id %>">Edit Address</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editAddressForm-<%= address._id %>" action="" method="POST">
+                                        <div class="mb-3">
+                                            <label for="editAddressName-<%= address._id %>" class="form-label">Name</label>
+                                            <input type="text" class="form-control" id="editAddressName-<%= address._id %>" name="name" value="<%= address.name %>" required>
+                                            <p id="editAddressNameError-<%= address._id %>" style="display: none; color: red;">name is required*</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editAddressStreet-<%= address._id %>" class="form-label">Street</label>
+                                            <input type="text" class="form-control" id="editAddressStreet-<%= address._id %>" name="street" value="<%= address.street %>" required>
+                                            <p id="editAddressStreetError-<%= address._id %>" style="display: none; color: red;"> street is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editAddressCity-<%= address._id %>" class="form-label">City</label>
+                                            <input type="text" class="form-control" id="editAddressCity-<%= address._id %>" name="city" value="<%= address.city %>" required>
+                                            <p id="editAddressCityError-<%= address._id %>" style="display: none; color: red;"> City Name is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editAddressState-<%= address._id %>" class="form-label">State</label>
+                                            <input type="text" class="form-control" id="editAddressState-<%= address._id %>" name="state" value="<%= address.state %>" required>
+                                            <p id="editAddressStateError-<%= address._id %>" style="display: none; color: red;"> state is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editAddressZip-<%= address._id %>" class="form-label">ZIP Code</label>
+                                            <input type="number" class="form-control" id="editAddressZip-<%= address._id %>" name="zipcode" value="<%= address.zipcode %>" required>
+                                            <p id="editAddressZipError-<%= address._id %>" style="display: none; color: red;"> zip code  is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editAddressMobile-<%= address._id %>" class="form-label">Mobile</label>
+                                            <input type="text" class="form-control" id="editAddressMobile-<%= address._id %>" name="mobile" value="<%= address.mobile %>" required>
+                                            <p id="editAddressMobileError-<%= address._id %>" style="display: none; color: red;"> Mobile Number is required</p>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-add" onclick="submitEditAddressForm('<%= address._id %>')">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                <% } %>
+            </div>
+        <% } else { %>
+            <p class="text-center">No addresses found. Please add a new address.</p>
+        <% } %>
+    </div>
+
+    <!-- Add Address Modal -->
+    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAddressForm">
+                        <div class="mb-3">
+                            <label for="addressName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="addressName" required>
+                            <p id="addAddressNameError" style="color: red; display: none;" >Name is requried</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addressStreet" class="form-label">Street</label>
+                            <input type="text" class="form-control" id="addressStreet" required>
+                            <p id="addAddressStreetError" style="color: red; display: none;">Street Name is required</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addressCity" class="form-label">City</label>
+                            <input type="text" class="form-control" id="addressCity" required>
+                            <p id="addAddressCityError" style="color: red; display: none;">City is required </p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addressState" class="form-label">State</label>
+                            <input type="text" class="form-control" id="addressState" required>
+                            <p id="addAddressStateError" style="color: red; display: none;">State is required</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addressZip" class="form-label">ZIP Code</label>
+                            <input type="number" class="form-control" id="addressZip" required>
+                            <p id="addAddressZipError" style="color: red; display: none;">Zip Code is required</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addressMobile" class="form-label">Mobile</label>
+                            <input type="text" class="form-control" id="addressMobile" required>
+                            <p id="addAddressMobileError" style="color: red; display: none;">Mobile NUmber is required</p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-add" onclick="submitAddressForm()">Add Address</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Address Modal -->
+    <div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAddressModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this address?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteAddress()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+  
+    <div id="snackbar"></div>
+   
+    <script>
+        let addressIdToDelete = null;
+
+        function confirmDelete(addressId) {
+            addressIdToDelete = addressId;
+            const deleteAddressModal = new bootstrap.Modal(document.getElementById('deleteAddressModal'));
+            deleteAddressModal.show();
+        }
+
+        function deleteAddress() {
+            if (!addressIdToDelete) return;
+
+            fetch(`/profile/showAddress/${addressIdToDelete}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector(`.address-box[data-address-id="${addressIdToDelete}"]`).remove();
+                    alert('Address deleted successfully!');
+                    window.location.reload()
+                } else {
+                    alert('Failed to delete address. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting address:', error);
+                alert('Failed to delete address. Please try again.');
+            });
+
+            
+        }
+
+        function submitAddressForm(addressId) {
+            
+                let name= document.getElementById('addressName').value
+                let nameError=document.getElementById('addAddressNameError')
+               let  street= document.getElementById('addressStreet').value
+               let streetError=document.getElementById('addAddressStreetError')
+               let city= document.getElementById('addressCity').value
+               let cityError=document.getElementById('addAddressCityError')
+               let state= document.getElementById('addressState').value
+               let stateError=document.getElementById('addAddressStateError')
+                let zipcode= document.getElementById('addressZip').value
+                let zipcodeError=document.getElementById('addAddressZipError')
+               let mobile= document.getElementById('addressMobile').value
+               let mobileError=document.getElementById('addAddressMobileError')
+            
+
+               let validate=true
+
+               if(name.trim()==''){
+                nameError.style.display='block'
+                validate=false
+               }
+               if(street.trim()==''){
+                streetError.style.display='block'
+                validate=false
+               }
+               if(city.trim()==''){
+                cityError.style.display='block'
+                validate=false
+               }
+               if(state.trim()==''){
+                stateError.style.display='block'
+                validate=false
+               }
+               if(zipcode.trim()==''){
+                zipcodeError.style.display='block'
+                validate=false
+               }
+               if(mobile.trim()==''){
+                mobileError.style.display='block'
+                validate=false
+               }
+
+               
+            
+            if(validate){
+                const formData = {
+            name: name,
+            street: street,
+            city: city,
+            state: state,
+            zipcode :zipcode,
+            mobile: mobile
+        };
+        console.log(formData)
+                fetch('/profile/showAddress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showsnackbar('Address added successfully!')
+                    $('#addAddressModal').modal('hide')
+                    // document.getElementById('addAddressForm').reset();
+                    setTimeout(() => {
+                window.location.reload(); // Reload the page after a short delay
+            }, 1000); 
+
+                    // Update DOM to display the new address
+                    const addressesContainer = document.getElementById('addressesContainer');
+                    // addressesContainer.innerHTML = '';
+                    // console.log(data)
+                  
+                } else {
+                    showsnackbar('Failed to add address. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding address:', error);
+                alert('Failed to add address. Please try again.');
+            });
+        }
+            }
+           
+
+        function submitEditAddressForm(addressId) {
+
+            let name=document.getElementById(`editAddressName-${addressId}`).value
+            let nameError=document.getElementById(`editAddressNameError-${addressId} `)
+            let street=document.getElementById(`editAddressStreet-${addressId}`).value
+            let streetError=document.getElementById(`editAddressStreetError-${addressId}`)
+            let city=document.getElementById(`editAddressCity-${addressId}`).value
+            let cityError=document.getElementById(`editAddressCityError-${addressId}`)
+            let state=document.getElementById(`editAddressState-${addressId}`).value 
+            let stateError=document.getElementById(`editAddressStreetError-${addressId}`)
+            let zipcode=document.getElementById(`editAddressZip-${addressId}`).value
+            let zipcodeError=document.getElementById(`editAddressZipError-${addressId}`)
+            let mobile=document.getElementById(`editAddressMobile-${addressId}`).value
+            let mobileError=document.getElementById(`editAddressMobileError-${addressId}`)
+            
+            let validate=true;
+
+            if(name.trim()==''){
+                nameError.style.display='block'
+                validate=false
+            }
+            if(street.trim()==''){
+                streetError.style.display='block'
+                validate=false
+            }
+            if(city.trim()==''){
+                cityError.style.display='block'
+                validate=false
+            }
+            if(state.trim()==''){
+                stateError.style.display='block'
+                validate=false
+            }
+            if(zipcode.trim()==''){
+                zipcodeError.style.display='block'
+                validate=false
+            }
+            if(mobile.trim()==''){
+                mobileError.style.display='block'
+                validate=false
+            }
+            
+            
+            const form = document.getElementById('editAddressForm-' + addressId);
+            const formData = new FormData(form);
+            
+            if(validate){
+                fetch(`/profile/showAddress/edit?id=${addressId}`, {
+                method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData)),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                if (data.success) {
+                    alert('Address updated successfully!');
+                   
+
+                    window.location.reload();
+                } else {
+                    ('Failed to update address. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating address:', error);
+                alert('Failed to update address. Please try again.');
+            });
+        }
+            }
+            
+            function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+                x.innerHTML=text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+          
+        
+    </script>
+</body>
+</html>
+
+<%- include('../layout/userlayout/footer') -%>

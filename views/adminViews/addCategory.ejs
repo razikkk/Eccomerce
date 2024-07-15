@@ -1,0 +1,128 @@
+<%- include('../layout/adminlayout/header')-%>
+
+<style>
+  #snackbar {
+    visibility: hidden; /* Hidden by default. Visible on click */
+    min-width: 250px; /* Set a default minimum width */
+    margin-left: -125px; /* Divide value of min-width by 2 */
+    background-color: #333; /* Black background color */
+    color: #fff; /* White text color */
+    text-align: center; /* Centered text */
+    border-radius: 2px; /* Rounded borders */
+    padding: 16px; /* Padding */
+    position: fixed; /* Sit on top of the screen */
+    z-index: 1; /* Add a z-index if needed */
+    left: 50%; /* Center the snackbar */
+    bottom: 30px; /* 30px from the bottom */
+  }
+
+  /* Show the snackbar when clicking on a button (class added with JavaScript) */
+  #snackbar.show {
+    visibility: visible; /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+    However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  }
+
+  /* Animations to fade the snackbar in and out */
+  @-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+
+  @keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+
+  @-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
+
+  @keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
+</style>
+
+<div class="col-md-6 grid-margin stretch-card">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Horizontal Form</h4>
+      <p class="card-description"> Horizontal form layout </p>
+      <form id="addCategoryForm">
+        <div class="form-group row">
+          <label for="exampleInputUsername2" class="col-sm-3 col-form-label">Category Name</label>
+          <div class="col-sm-9">
+            <input type="text" class="form-control" name="categoryName" id="categoryName" placeholder="Enter Category Name">
+            <small class="text-danger" id="categoryNameError" style="display: none;">Category name is required</small>
+            <small class="text-danger" id="categoryExistsError" style="display: none;">Category name already exists</small>
+            <button type="button" class="btn btn-primary me-2" style="margin-top: 20px;" onclick="addCategory()">Add</button>
+            <button type="button" class="btn btn-dark" style="margin-top: 20px;" onclick="window.location.href='/admin/category'">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="snackbar"></div>
+
+<script>
+  async function addCategory() {
+    const categoryName = document.getElementById('categoryName').value;
+    const categoryNameError = document.getElementById('categoryNameError');
+    const categoryExistsError = document.getElementById('categoryExistsError');
+
+    // Clear previous errors
+    categoryNameError.style.display = 'none';
+    categoryExistsError.style.display = 'none';
+
+    // Validation
+    let validate = true;
+    if (categoryName.trim() === '') {
+      categoryNameError.style.display = 'block';
+      validate = false;
+    }
+
+    if (validate) {
+      try {
+        const response = await fetch('/admin/category/addCategory', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ categoryName })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showsnackbar(data.message, true); // Pass true to trigger redirection
+        } else {
+          showsnackbar(data.message || 'An error occurred', false); // Pass false to avoid redirection
+          if (data.message === 'Category name already exists') {
+            categoryExistsError.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.log(error.message);
+        alert('An error occurred');
+      }
+    }
+  }
+
+  function showsnackbar(text, shouldRedirect) {
+    var x = document.getElementById("snackbar");
+    x.innerHTML = text;
+    x.className = "show";
+    setTimeout(function() {
+      x.className = x.className.replace("show", "");
+      if (shouldRedirect) {
+        window.location.href = '/admin/category';
+      }
+    }, 3000);
+  }
+</script>

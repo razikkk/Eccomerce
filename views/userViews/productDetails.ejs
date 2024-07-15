@@ -1,0 +1,459 @@
+<%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+
+
+    <style>
+        .stock-info {
+            font-size: 1rem;
+            /* Adjust font size as needed */
+            font-weight: 500;
+            /* Make the text bold */
+            
+            /* Conditional color */
+        }
+
+        .price-container {
+            display: inline-block;
+            /* Ensures both elements stay on the same line */
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            /* Adds a line through the text */
+            color: red;
+            /* Color for the original price */
+            margin-right: 5px;
+            /* Optional: Adds a small space between original and discounted price */
+        }
+
+        .discounted-price {
+            color: red;
+            /* Red color for the discounted price */
+        }
+        #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #28A745; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+    </style>
+    <div class="breadcrumbs">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p class="bread"><span><a href="/">Home</a></span> / <span>Product Details</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="colorlib-product">
+        <div class="container">
+            <div class="row row-pb-lg product-detail-wrap">
+                <div class="col-sm-8">
+                    <div class="owl-carousel ">
+                        <% productDetail.images.forEach(function(image) { %>
+                            <div class="item carousel slide" data-ride="carousel" >
+                                <div class="product-entry border" id="container">
+                                    <a href="/static/user/images/<%= image %>" class="prod-img"
+                                        data-zoom-image="/static/user/images/<%= image %>">
+                                        <img src="/static/user/images/<%= image %>" class="img-fluid"
+                                            alt="Product image" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </a>
+                                </div>
+                            </div>
+                            <% }); %>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="product-desc">
+                        <h3>
+                            <%= productDetail.name %>
+                        </h3>
+                        <p class="price">
+                            <span class="price-container">
+                                <del class="original-price">&#8377;<%= productDetail.price %></del>
+                                <span class="discounted-price">&#8377;<%= productDetail.discountPrice %></span>
+                            </span>
+
+                            <span class="rate">
+                                <i class="icon-star-full"></i>
+                                <i class="icon-star-full"></i>
+                                <i class="icon-star-full"></i>
+                                <i class="icon-star-full"></i>
+                                <i class="icon-star-half"></i>
+                                (74 Rating)
+                            </span>
+                        </p>
+                        <p>
+                            <%= productDetail.description %>
+                        </p>
+                        <p class="stock-info">
+                            <%if( productDetail.stock>2){%>
+                                <div class="text-success" style="font-weight: 900; color: #28A745; font-size: 1.1em;">🌟 IN STOCK 🌟</div>
+
+
+
+
+
+                                <%}else if(productDetail.stock>0&& productDetail.stock<=2){%>
+                                        <div  style="font-weight: 700; color: #FF4500; font-size: 1.1em;"><%=`🔥 Only ${productDetail.stock} left in stock! Grab yours now!`%>
+                                        </div>
+                                        <%}else{%>
+                                            <div class="text-danger" style="font-weight: 900; color: #FF0000; font-size: 1.1em;">❌ NO STOCK LEFT ❌</div>
+
+                                            <%}%>
+                        </p>
+
+                    </div>
+                    <!-- quantity -->
+                    <!-- <div class="input-group mb-4">
+                    <span class="input-group-btn">
+                        <button type="button" class="quantity-left-minus btn" data-type="minus" data-field="">
+                            <i class="icon-minus2"></i>
+                        </button>
+                    </span>
+                    <input type="text" id="quantity" name="quantity" class="form-control input-number" value="1" min="1" max="100">
+                    <span class="input-group-btn ml-1">
+                        <button type="button" class="quantity-right-plus btn" data-type="plus" data-field="">
+                            <i class="icon-plus2"></i>
+                        </button>
+                    </span>
+                </div> -->
+                <div class="row">
+                    <div class="col-sm-12 text-center">
+                        <% if (isLogin) { %>
+                            <% if (productDetail.stock > 0) { %>
+                                <p class="addtocart">
+                                    <a href="#" class="btn btn-primary btn-addtocart">
+                                        <i class="icon-shopping-cart"></i> Add to Cart
+                                    </a>
+                                </p>
+                            <% } %>
+                        <% } %>
+                    </div>
+                </div>
+                
+                
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="row">
+                        <div class="col-md-12 pills">
+                            <div class="bd-example bd-example-tabs">
+                                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="pills-description-tab" data-toggle="pill"
+                                            href="#pills-description" role="tab" aria-controls="pills-description"
+                                            aria-expanded="true">Description</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="pills-manufacturer-tab" data-toggle="pill"
+                                            href="#pills-manufacturer" role="tab" aria-controls="pills-manufacturer"
+                                            aria-expanded="true">Manufacturer</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="pills-review-tab" data-toggle="pill"
+                                            href="#pills-review" role="tab" aria-controls="pills-review"
+                                            aria-expanded="true">Review</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                    <div class="tab-pane border fade show active" id="pills-description" role="tabpanel"
+                                        aria-labelledby="pills-description-tab">
+                                        <p>Even the all-powerful Pointing has no control about the blind texts it is an
+                                            almost unorthographic life One day however a small line of blind text by the
+                                            name of Lorem Ipsum decided to leave for the far World of Grammar.</p>
+                                        <p>When she reached the first hills of the Italic Mountains, she had a last view
+                                            back on the skyline of her hometown Bookmarksgrove, the headline of Alphabet
+                                            Village and the subline of her own road, the Line Lane. Pityful a rethoric
+                                            question ran over her cheek, then she continued her way.</p>
+                                        <ul>
+                                            <li>The Big Oxmox advised her not to do so</li>
+                                            <li>Because there were thousands of bad Commas</li>
+                                            <li>Wild Question Marks and devious Semikoli</li>
+                                            <li>She packed her seven versalia</li>
+                                            <li>tial into the belt and made herself on the way.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="tab-pane border fade" id="pills-manufacturer" role="tabpanel"
+                                        aria-labelledby="pills-manufacturer-tab">
+                                        <p>Even the all-powerful Pointing has no control about the blind texts it is an
+                                            almost unorthographic life One day however a small line of blind text by the
+                                            name of Lorem Ipsum decided to leave for the far World of Grammar.</p>
+                                        <p>When she reached the first hills of the Italic Mountains, she had a last view
+                                            back on the skyline of her hometown Bookmarksgrove, the headline of Alphabet
+                                            Village and the subline of her own road, the Line Lane. Pityful a rethoric
+                                            question ran over her cheek, then she continued her way.</p>
+                                    </div>
+                                    <div class="tab-pane border fade" id="pills-review" role="tabpanel"
+                                        aria-labelledby="pills-review-tab">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h3 class="head">23 Reviews</h3>
+                                                <div class="review">
+                                                    <div class="user-img"
+                                                        style="background-image: url(/static/user/images/person1.jpg)">
+                                                    </div>
+                                                    <div class="desc">
+                                                        <h4>
+                                                            <span class="text-left">Jacob Webb</span>
+                                                            <span class="text-right">14 March 2018</span>
+                                                        </h4>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-half"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                            </span>
+                                                            <span class="text-right"><a href="#" class="reply"><i
+                                                                        class="icon-reply"></i></a></span>
+                                                        </p>
+                                                        <p>When she reached the first hills of the Italic Mountains, she
+                                                            had a last view back on the skyline of her hometown
+                                                            Bookmarksgrove.</p>
+                                                    </div>
+                                                </div>
+                                                <div class="review">
+                                                    <div class="user-img"
+                                                        style="background-image: url(/static/user/images/person2.jpg)">
+                                                    </div>
+                                                    <div class="desc">
+                                                        <h4>
+                                                            <span class="text-left">Jacob Webb</span>
+                                                            <span class="text-right">14 March 2018</span>
+                                                        </h4>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-half"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                            </span>
+                                                            <span class="text-right"><a href="#" class="reply"><i
+                                                                        class="icon-reply"></i></a></span>
+                                                        </p>
+                                                        <p>When she reached the first hills of the Italic Mountains, she
+                                                            had a last view back on the skyline of her hometown
+                                                            Bookmarksgrove.</p>
+                                                    </div>
+                                                </div>
+                                                <div class="review">
+                                                    <div class="user-img"
+                                                        style="background-image: url(/static/user/images/person3.jpg)">
+                                                    </div>
+                                                    <div class="desc">
+                                                        <h4>
+                                                            <span class="text-left">Jacob Webb</span>
+                                                            <span class="text-right">14 March 2018</span>
+                                                        </h4>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-half"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                            </span>
+                                                            <span class="text-right"><a href="#" class="reply"><i
+                                                                        class="icon-reply"></i></a></span>
+                                                        </p>
+                                                        <p>When she reached the first hills of the Italic Mountains, she
+                                                            had a last view back on the skyline of her hometown
+                                                            Bookmarksgrove.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="rating-wrap">
+                                                    <h3 class="head">Give a Review</h3>
+                                                    <div class="wrap">
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                (98%)
+                                                            </span>
+                                                            <span>20 Reviews</span>
+                                                        </p>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                (85%)
+                                                            </span>
+                                                            <span>10 Reviews</span>
+                                                        </p>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                (70%)
+                                                            </span>
+                                                            <span>5 Reviews</span>
+                                                        </p>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                (10%)
+                                                            </span>
+                                                            <span>0 Reviews</span>
+                                                        </p>
+                                                        <p class="star">
+                                                            <span>
+                                                                <i class="icon-star-full"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                <i class="icon-star-empty"></i>
+                                                                (0%)
+                                                            </span>
+                                                            <span>0 Reviews</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="snackbar"></div>
+
+    <script>
+
+
+    //zoom
+        document.addEventListener('DOMContentLoaded', function () {
+            const items = document.querySelectorAll('.owl-carousel .item');
+
+            items.forEach(item => {
+                const container = item.querySelector('.product-entry');
+                const img = item.querySelector('.prod-img img');
+
+                container.addEventListener('mousemove', (e) => {
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    img.style.transformOrigin = `${x}px ${y}px`;
+                    img.style.transform = "scale(2)";
+                });
+
+                container.addEventListener("mouseleave", () => {
+                    img.style.transformOrigin = "center";
+                    img.style.transform = "scale(1)";
+                });
+            });
+        });
+
+        //add to cart
+        document.querySelector('.btn-addtocart').addEventListener('click', async () => {
+            try {
+                const productId = '<%= productDetail._id%>';
+
+                const response = await fetch('/addToCart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId
+                    })
+
+                })
+                console.log(response)
+                if (!response.ok) {
+                    throw new Error('failed to add product to cart')
+                }
+                const data = await response.json()
+                console.log(data.success)
+                if(data.success==false){
+                    showsnackbar('Already In Cart')
+                }else{
+                    showsnackbar('Added To Cart')
+                }
+              
+
+            } catch (error) {
+                alert(error.message)
+            }
+        })
+
+
+        function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+ x.innerHTML=text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+
+    </script>
+
+    <%- include('../layout/userlayout/footer') -%>

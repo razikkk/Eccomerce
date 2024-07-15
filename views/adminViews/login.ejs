@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Corona Admin</title>
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="/static/admin/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="static/admin/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="/static/admin/css/style.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="/static/user/images/favicon.png" />
+  </head>
+  <body>
+    <div class="container-scroller">
+      <div class="container-fluid page-body-wrapper full-page-wrapper">
+        <div class="row w-100 m-0">
+          <div class="content-wrapper full-page-wrapper d-flex align-items-center auth login-bg">
+            <div class="card col-lg-4 mx-auto">
+              <div class="card-body px-5 py-5">
+                <h3 class="card-title text-left mb-3">Login</h3>
+
+
+                <form action="" method="post" id="adminLogin">
+                  
+                    
+                    <input type="email" name="email" class="form-control p_input" id="adminEmail" placeholder="Enter Email" style="color: white;">
+                    <p id="adminEmailError" style="display: none; color: red;">email is required</p>
+                    <br>                    
+                    <input type="password" name="password" class="form-control p_input" id="adminPassword" placeholder="Enter Password" style="color: white;">
+                    <p id="adminPasswordError" style="display: none; color: red;">password is required</p>
+                  <div class="form-group d-flex align-items-center justify-content-between">
+                    
+                    
+                  </div>
+                  <div class="text-center">
+                    <button type="submit" onclick="handleAdminLogin()" class="btn btn-primary btn-block  enter-btn" id="adminLoginButton">Login</button>
+                  </div>                 
+                </form>
+
+
+              </div>
+            </div>
+          </div>
+          <!-- content-wrapper ends -->
+        </div>
+        <!-- row ends -->
+      </div>
+      <!-- page-body-wrapper ends -->
+    </div>
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <script src="static/admin/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="static/admin/js/off-canvas.js"></script>
+    <script src="static/admin/js/hoverable-collapse.js"></script>
+    <script src="static/admin/js/misc.js"></script>
+    <script src="static/admin/js/settings.js"></script>
+    <script src="static/admin/js/todolist.js"></script>
+    <!-- endinject -->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+       <script>
+             function handleAdminLogin() {
+            event.preventDefault();
+            let email = document.getElementById('adminEmail').value;
+            let password = document.getElementById('adminPassword').value;
+            let emailError = document.getElementById('adminEmailError');
+            let passwordError = document.getElementById('adminPasswordError');
+            emailError.style.display = 'none';
+            passwordError.style.display = 'none';
+            let isValid = true;
+            if (email.trim() === "") {
+                isValid = false;
+                emailError.style.display = 'block';
+            }
+            if (password.trim() === "") {
+                isValid = false;
+                passwordError.style.display = 'block';
+            }
+            if (isValid) {
+                document.getElementById('adminLogin').submit();
+            }
+        }
+
+        
+
+
+        
+             
+
+       </script>
+
+
+
+
+    
+  </body>
+</html>

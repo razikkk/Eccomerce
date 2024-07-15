@@ -1,0 +1,106 @@
+<%- include('../layout/adminlayout/header')-%>
+
+    <div class="col-lg-10 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Hoverable Table</h4>
+
+                <p class="card-description">  <code>Product Details</code>
+                    <button style="margin-left: 670px; margin-top: 20px; border: none;" class="badge badge-dark" onclick="location.href='/admin/products/addProduct'">Add
+                        product</button>
+                    <button style="margin-left: 800px; margin-top: 20px;  border :none; " class="badge badge-danger" onclick="location.href='/admin/product/deletedProduct'">Deleted
+                        Products</button>
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Discount</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (product.length > 0) { %>
+                                <% product.forEach(function(product) { %>
+                                    <tr>
+                                        <td style="color: white;"><%= product.name %></td>
+                                        <td style="color: white;"><%= product.category.categoryName %></td>
+                                        <td class="text-danger"> &#8377;<%= product.price %></td>
+                                        <td class="text-danger"> &#8377; <%= product.discountPrice %></td> 
+                                                  
+                                          
+                                        <td class="text-danger"><%= product.stock %></td>
+                                        <td>
+                                            <button class="badge badge-dark border-0" onclick="location.href='/admin/product/editProduct?id=<%= product._id%>'">Edit</button>
+                                            <a href="#"
+                                            class="btn btn-danger btn-sm"
+                                            onclick="confirmDelete('<%= product._id %>')">Delete</a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" style="color: white;" class="text-center">No products found</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        function confirmDelete(productId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This product will get deleted',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Sending delete request to the controller
+                    axios.delete(`/admin/product/deleteProduct?id=${productId}`)
+                        .then((response) => {
+                            // Checking success
+                            if (response.data.success) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    'Your product has been deleted.',
+                                    'success'
+                                ).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    'Failed to delete the product.',
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting the product:', error);
+                            Swal.fire(
+                                'Error!',
+                                'An error occurred while deleting the product.',
+                                'error'
+                            );
+                        });
+                }else{
+                    console.log("no shit");
+                }
+            });
+        }
+    </script>
+    

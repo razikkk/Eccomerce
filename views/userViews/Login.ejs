@@ -1,0 +1,241 @@
+<%- include('../layout/userlayout/header',{isLogin:isLogin}) -%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title >Login</title>
+    
+    <style>
+        body {
+            background-color: #f2f2f2;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0 20px;
+        }
+
+        .login-container {
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-left: 20%;
+            margin-top: 3%;
+        }
+
+        .login-image {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f2f2f2;
+        }
+
+        .login-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+        }
+
+        .login-form-container {
+            padding: 3rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-form-container h1 {
+            font-size: 2rem;
+            color: #333333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .login-form-container form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-form-container input[type="email"],
+        .login-form-container input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .login-form-container input[type="submit"] {
+            padding: 0.75rem;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .login-form-container input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .login-form-container .forgot-password {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+
+        .login-form-container .forgot-password a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        .login-form-container .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .login-form-container .register-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .login-form-container .register-link a {
+            color: #FF0000;
+            text-decoration: none;
+        }
+
+        .login-form-container .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .login-form-container .google-login {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-form-container .google-login img {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.5rem;
+        }
+
+        
+
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+                margin: 0 10px;
+            }
+
+            .login-image {
+                display: none;
+            }
+
+            .login-form-container {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-form-container h1 {
+                font-size: 1.5rem;
+            }
+
+            .login-form-container input[type="email"],
+            .login-form-container input[type="password"],
+            .login-form-container input[type="submit"] {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="login-container">
+        <div class="login-image">
+            <img src="/static/user/images/High End Commercial Product Still Life Photography Tom Ford Fragrance Cologne.jpeg" alt="Login Image">
+        </div>
+        <div class="login-form-container">
+            <h1>LOGIN</h1>
+            <% if (typeof message !=='undefined' ) { %>
+                <h4 style="color: red; text-align: center;"><%= message %></h4>
+            <% } %>
+            <form action="/login" method="post" id="loginForm">
+                <input type="email" name="email" id="email" placeholder="Enter Email">
+                <p id="emailError" style="display: none; color: red;">Email is required</p>
+                <input type="password" name="password" id="password" placeholder="Enter Password">
+                <p id="passwordError" style="display: none; color: red;">Password is required</p>
+                
+                <input type="submit" onclick="handleLogin()" id="loginButton" value="SUBMIT">
+            </form>
+            <div id="or" style="text-align: center;">OR</div>
+            <a class="google-login" href="/auth/google">
+                <img src="/static/user/images/icons8-google-144(@3×).png" style="width: 30px;height: 30px;" alt="Google Icon">
+                
+            </a>
+            <div class="register-link">
+                <span>Don't have an account? <a href="/registration">Register</a></span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        function handleLogin() {
+            event.preventDefault();
+            let email = document.getElementById('email').value;
+            let password = document.getElementById('password').value;
+            let emailError = document.getElementById('emailError');
+            let passwordError = document.getElementById('passwordError');
+            emailError.style.display = 'none';
+            passwordError.style.display = 'none';
+            let isValid = true;
+            if (email.trim() === "") {
+                isValid = false;
+                emailError.style.display = 'block';
+            }
+            if (password.trim() === "") {
+                isValid = false;
+                passwordError.style.display = 'block';
+            }
+            if (isValid) {
+                document.getElementById('loginForm').submit();
+            }
+        }
+        
+
+        
+
+
+        
+    </script>
+    
+      
+</body>
+</html>
+
+
+
+<%- include('../layout/userlayout/footer') -%>
+
+

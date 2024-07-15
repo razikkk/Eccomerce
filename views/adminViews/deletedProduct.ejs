@@ -1,0 +1,92 @@
+<%- include('../layout/adminlayout/header')-%>
+
+
+
+
+
+<div class="col-lg-10 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Hoverable Table</h4>
+        <p class="card-description"> deleted<code>.table-hover</code>
+        </p>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>product</th>
+                <th>category</th>
+                <th>price</th>
+                <th>discount</th>
+                <th>stock</th>
+                <th>action</th>
+              </tr>
+            </thead>
+            <tbody>
+                <% if(product.length > 0) { %>
+                    <% for(let i=0; i<product.length; i++) { %>
+                      <tr>
+        
+                        <td><%= product[i].name %></td>
+                        <td><%= product[i].category.categoryName %></td>
+                        <td>&#8377;<%= product[i].price %></td>
+                        <td>&#8377;<%= product[i].discountPrice %></td>
+                        <td><%= product[i].stock %></td>
+                        
+                            
+                          <td>
+                          <a href="#" class="btn btn-danger btn-sm" onclick="restoreCategory('<%= product[i]._id %>')">Restore</a>
+                        </td>
+                      </tr>
+                    <% } %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="5" class="text-center">Products not found</td>
+                    </tr>
+                  <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  function restoreCategory(productId) {
+      console.log("Attempting to restore productId:", productId);
+      axios.get(`/admin/product/restoreProduct/?id=${productId}`)
+          .then((response) => {
+              const data = response.data;
+              console.log('AHDHAOOOFOANDALDFLKJDSLJA',data);
+              if (data) {
+                  Swal.fire(
+                      'Restored!',
+                      'Your category has been restored.',
+                      'success'
+                  ).then(() => {
+                    console.log('jfa');
+                      window.location.reload();
+
+                  });
+              } else {
+                  Swal.fire(
+                      'Error!',
+                      data.message || 'Failed to restore the category.',
+                      'error'
+                  );
+              }
+          })
+          .catch((error) => {
+              console.error('Error restoring the category:', error);
+              Swal.fire(
+                  'Error!',
+                  'An error occurred while restoring the category.',
+                  'error'
+              );
+          });
+  }
+</script>
+

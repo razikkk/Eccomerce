@@ -1,0 +1,430 @@
+<%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+
+<style>
+    .address-box {
+        border: 1px solid #000;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        position: relative;
+        background-color: #fff;
+        color: #000;
+    }
+
+    .address-box input[type="radio"] {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+    }
+
+    .address-box p {
+        margin: 5px 0;
+        padding-left: 40px; /* Adjust padding to make space for the radio button */
+    }
+
+    .address-box h4 {
+        margin-bottom: 10px;
+        padding-left: 40px; /* Adjust padding to make space for the radio button */
+    }
+
+    .breadcrumbs, .colorlib-product, .cart-detail, .form-group, .radio, .checkbox {
+        color: #000;
+    }
+
+    .toggle-button {
+        margin-bottom: 20px;
+        cursor: pointer;
+        color: #2196F3;
+    }
+    #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #28A745; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+.cart-detail p {
+    margin-bottom: 10px; /* Adjust the margin bottom as per your preference */
+    display: flex;
+    justify-content: space-between;
+}
+
+.cart-detail span {
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 80px; /* Adjust this value to align the prices correctly */
+}
+</style>
+
+<div class="breadcrumbs">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <p class="bread"><span><a href="index.html">Home</a></span> / <span>Checkout</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="colorlib-product">
+    <div class="container">
+        <div class="row row-pb-lg">
+            <div class="col-sm-10 offset-md-1">
+                <div class="process-wrap">
+                    <div class="process text-center active">
+                        <p><span>01</span></p>
+                        <h3>Shopping Cart</h3>
+                    </div>
+                    <div class="process text-center active">
+                        <p><span>02</span></p>
+                        <h3>Checkout</h3>
+                    </div>
+                    <div class="process text-center">
+                        <p><span>03</span></p>
+                        <h3>Order Complete</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+       
+        <div class="row">
+            <div class="col-lg-8">
+                <h3>Addresses</h3>
+                <div class="d-flex justify-content-end mb-4">
+                    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addAddressModal">Add Address</button>
+                </div>
+                
+                <ul class="list-unstyled">
+                    <% address.forEach(function(address, index) { %>
+                        <li class="address-box" <%= index > 0 ? 'style="display:none;"' : '' %>>
+                            <input type="radio" name="address" value="<%= address._id %>" class="address-radio">
+                            <h4><%= address.name %></h4>
+                            <p><strong>Street:</strong> <%= address.street %></p>
+                            <p><strong>City:</strong> <%= address.city %></p>
+                            <p><strong>State:</strong> <%= address.state %></p>
+                            <p><strong>ZIP Code:</strong> <%= address.zipcode %></p>
+                            <p><strong>Mobile:</strong> <%= address.mobile %></p>
+                        </li>
+                    <% }) %>
+                </ul>
+                <% if (address.length > 1) { %>
+                <div class="toggle-button">Show more addresses</div>
+                <% } %>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="cart-detail">
+                            <h2>Cart Total</h2> 
+                            <p>Subtotal:<span id="checkoutSubTotal">₹0.00</span></p> 
+                                        <p>1 x Product Name <span>₹0.00</span></p>
+                                        <p>Discount: <span id="checkoutDiscount">₹0.00</span></p>
+                               <p>Shipping <span>₹00.00</span></p>
+                                <p>Total: <span id="checkoutTotal">₹0.00</span></p>
+                            
+                        </div>
+                    </div>
+
+                   
+                    <!--  -->
+                    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="addAddressForm">
+                                        <div class="mb-3">
+                                            <label for="addressName" class="form-label">Name</label>
+                                            <input type="text" class="form-control" id="addressName" required>
+                                            <p id="addAddressNameError" style="color: red; display: none;" >Name is requried</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="addressStreet" class="form-label">Street</label>
+                                            <input type="text" class="form-control" id="addressStreet" required>
+                                            <p id="addAddressStreetError" style="color: red; display: none;">Street Name is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="addressCity" class="form-label">City</label>
+                                            <input type="text" class="form-control" id="addressCity" required>
+                                            <p id="addAddressCityError" style="color: red; display: none;">City is required </p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="addressState" class="form-label">State</label>
+                                            <input type="text" class="form-control" id="addressState" required>
+                                            <p id="addAddressStateError" style="color: red; display: none;">State is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="addressZip" class="form-label">ZIP Code</label>
+                                            <input type="number" class="form-control" id="addressZip" required>
+                                            <p id="addAddressZipError" style="color: red; display: none;">Zip Code is required</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="addressMobile" class="form-label">Mobile</label>
+                                            <input type="text" class="form-control" id="addressMobile" required>
+                                            <p id="addAddressMobileError" style="color: red; display: none;">Mobile NUmber is required</p>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-add"  onclick="submitAddressForm()">Add Address</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--  -->
+
+                    <div class="w-100"></div>
+
+                    <div class="col-md-12">
+                        <div class="cart-detail">
+                            <h2>Payment Method</h2>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <div class="radio">
+                                        <label><input type="radio" name="optradio">RazorPay</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <div class="radio">
+                                        <label><input type="radio" name="optradio"> Cash On Delivery</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <div class="radio">
+                                        <label><input type="radio" name="optradio"> Paypal</label>
+                                    </div>
+                                </div>
+                            </div>
+                           
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <p><a href="#" class="btn btn-dark">Place an order</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="snackbar"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.x.x/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.querySelector('.toggle-button');
+        const addressBoxes = document.querySelectorAll('.address-box');
+        let displayState = sessionStorage.getItem('displayState') || 'first';
+
+        function updateDisplay(state) {
+            if (state === 'first') {
+                addressBoxes.forEach((box, index) => {
+                    box.style.display = index > 0 ? 'none' : 'block';
+                });
+                toggleButton.textContent = 'Show more addresses';
+            } else {
+                addressBoxes.forEach((box) => {
+                    box.style.display = 'block';
+                });
+                toggleButton.textContent = 'Show fewer addresses';
+            }
+        }
+
+        updateDisplay(displayState);
+
+        toggleButton.addEventListener('click', function() {
+            if (displayState === 'first') {
+                displayState = 'all';
+            } else {
+                displayState = 'first';
+            }
+            sessionStorage.setItem('displayState', displayState);
+            updateDisplay(displayState);
+        });
+
+        const radios = document.querySelectorAll('.address-radio');
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                radios.forEach(r => r.checked = false);
+                this.checked = true;
+            });
+        });
+    });
+
+    //add address
+
+    function submitAddressForm() {
+            
+            let name= document.getElementById('addressName').value
+            let nameError=document.getElementById('addAddressNameError')
+           let  street= document.getElementById('addressStreet').value
+           let streetError=document.getElementById('addAddressStreetError')
+           let city= document.getElementById('addressCity').value
+           let cityError=document.getElementById('addAddressCityError')
+           let state= document.getElementById('addressState').value
+           let stateError=document.getElementById('addAddressStateError')
+            let zipcode= document.getElementById('addressZip').value
+            let zipcodeError=document.getElementById('addAddressZipError')
+           let mobile= document.getElementById('addressMobile').value
+           let mobileError=document.getElementById('addAddressMobileError')
+        
+
+           let validate=true
+
+           if(name.trim()==''){
+            nameError.style.display='block'
+            validate=false
+           }
+           if(street.trim()==''){
+            streetError.style.display='block'
+            validate=false
+           }
+           if(city.trim()==''){
+            cityError.style.display='block'
+            validate=false
+           }
+           if(state.trim()==''){
+            stateError.style.display='block'
+            validate=false
+           }
+           if(zipcode.trim()==''){
+            zipcodeError.style.display='block'
+            validate=false
+           }
+           if(mobile.trim()==''){
+            mobileError.style.display='block'
+            validate=false
+           }
+
+           
+        
+        if(validate){
+            const formData = {
+        name: name,
+        street: street,
+        city: city,
+        state: state,
+        zipcode: zipcode,
+        mobile: mobile
+    };
+            fetch('/cart/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(data)
+                showsnackbar('Address added successfully!')
+                $('#addAddressModal').modal('hide')
+                
+                setTimeout(() => {
+            window.location.reload(); // Reload the page after a short delay
+        }, 1000); 
+
+                // Update DOM to display the new address
+                const addressesContainer = document.getElementById('addressesContainer');
+                // addressesContainer.innerHTML = '';
+                // console.log(data)
+              
+            } else {
+                showsnackbar('Failed to add address. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding address:', error);
+            alert('Failed to add address. Please try again.');
+        });
+    }
+        }
+
+        //subtotal,discount,total
+
+        function formatPrice(price){
+        return `${parseFloat(price).toFixed(2)}`
+    }
+        function loadCartValues(){
+            const subtotal=localStorage.getItem('cartSubTotal',)
+            const discount=localStorage.getItem('cartDiscount')
+            const total=localStorage.getItem('cartTotal')
+
+            if(subtotal && discount && total){
+                document.getElementById('checkoutSubTotal').textContent=formatPrice(subtotal)
+                console.log(subtotal,'sub')
+                document.getElementById('checkoutDiscount').textContent=formatPrice(discount)
+                console.log(discount,'dis')
+                document.getElementById('checkoutTotal').textContent=formatPrice(total)
+                console.log(total,'total')
+            }else{
+                console.log('cart values not found in local storage')
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadCartValues);
+
+        function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+    x.innerHTML=text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+       
+</script>
+
+<%- include('../layout/userlayout/footer') -%>

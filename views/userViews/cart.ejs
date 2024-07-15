@@ -1,0 +1,458 @@
+<%- include('../layout/userlayout/header') -%>
+
+<style>
+    #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #FF6347; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+</style>
+
+    <div class="colorlib-product">
+        <div class="container">
+            <div class="row row-pb-lg">
+                <div class="col-md-10 offset-md-1">
+                    <div class="process-wrap">
+                        <div class="process text-center active">
+                            <p><span>01</span></p>
+                            <h3>Shopping Cart</h3>
+                        </div>
+                        <div class="process text-center">
+                            <p><span>02</span></p>
+                            <h3>Checkout</h3>
+                        </div>
+                        <div class="process text-center">
+                            <p><span>03</span></p>
+                            <h3>Order Complete</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-pb-lg">
+                <div class="col-md-12">
+                    <div class="product-name d-flex">
+                        <div class="one-forth text-left px-4">
+                            <span>Product Details</span>
+                        </div>
+                        <div class="one-eight text-center">
+                            <span>Price</span>
+                        </div>
+                        <div class="one-eight text-center">
+                            <span>Quantity</span>
+                        </div>
+                        <div class="one-eight text-center">
+                            <span>Total</span>
+                        </div>
+                        <div class="one-eight text-center px-4">
+                            <span>Remove</span>
+                        </div>
+                    </div>
+
+
+                    <div class="container">
+                        <% if (cartDatas && cartDatas.products && cartDatas.products.length> 0) { %>
+                            <% cartDatas.products.forEach(item=> { %>
+                                <div class="product-cart d-flex">
+                                    <div class="one-forth">
+                                        <a href="/shop/productDetails/<%= item.productId._id %>">
+                                            <div class="product-img"
+                                                style="background-image: url('/static/user/images/<%= item.productId.images[0] %>');">
+                                            </div>
+                                        </a>
+                                        <div class="display-tc">
+                                            <h3>
+                                                <%= item.productId.name %>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div class="one-eight text-center">
+                                        <div class="display-tc">
+                                            <span class="price"
+                                                style="display: flex; justify-content: center; align-items: center;">
+                                                <del style="margin-right: 10px; font-size: 0.9em;;" id="product-price-<%= item._id %>" data-unit-rprice="<%= item.productId.price %>"> &#8377;<%=
+                                                        item.productId.price.toFixed(2) %></del>
+                                                <strong style="font-size: 1.2em;">&#8377;<%=
+                                                        item.productId.discountPrice.toFixed(2) %></strong>
+                                            </span>
+
+
+                                        </div>
+                                    </div>
+                                    <div class="quantity mt-4">
+                                        <div class="pro-qty-2">
+                                            <button class="qty-down" data-cart-id="<%= item._id %>">-</button>
+                                            <input type="text" id="quantityUpdate-<%= item._id %>"
+                                                data-cart-id="<%= item._id%>" value="<%= item.quantity %>"
+                                                data-available-quantity="<%= item.productId.stock%>">
+                                            <button class="qty-up" data-cart-id="<%= item._id %>">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="one-eight text-center">
+                                        <div class="display-tc">
+                                            <span class="price" id="priceUpdate-<%= item.id %>" data-unit-price="<%= item.productId.discountPrice %>">
+                                                <%= (item.productId.discountPrice * item.quantity).toFixed(2) %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="one-eight text-center">
+                                        <div class="display-tc">
+                                            <a href="#"  data-product-id="<%=item.productId._id%>" class="closed"></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+                                    <% } else { %>
+                                        <p>No items in the cart.</p>
+                                        <% } %>
+                    </div>
+
+                </div>
+            </div>
+            <div class="row row-pb-lg">
+                <div class="col-md-12">
+                    <div class="total-wrap">
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <form action="#">
+                                    <div class="row form-group">
+                                        <div class="col-sm-9">
+                                            <input type="text" name="quantity" class="form-control input-number"
+                                                placeholder="Your Coupon Number...">
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <input type="submit" value="Apply Coupon" class="btn btn-dark">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-sm-4 text-center">
+                                <div class="total">
+                                    <div class="sub">
+                                        
+                                            <p>Subtotal : <span id="subtotal"></span></p>
+                                            
+                                            <p>Discount : <span id="discount"></span></p>
+                                            <p>Delivery : <span class="text-success">FREE <del class="text-muted">40</del></span></p>
+                                        <div class="grand-total">
+                                            <p>Total : <span id="total"></span></p>
+                                        </div>
+                                        <a href="/cart/checkout" id="checkoutButton" class="btn btn-dark">Check Out</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-8 offset-sm-2 text-center colorlib-heading colorlib-heading-sm">
+                    <h2>Related Products</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="/static/user/images/item-1.jpg" class="img-fluid"
+                                alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Women's Boots Shoes Maca</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="/static/user/images/item-2.jpg" class="img-fluid"
+                                alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Women's Minam Meaghan</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="/static/user/images/item-3.jpg" class="img-fluid"
+                                alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Men's Taja Commissioner</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="/static/user/images/item-4.jpg" class="img-fluid"
+                                alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Russ Men's Sneakers</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .pro-qty-2 {
+            display: flex;
+            align-items: center;
+        }
+
+        .pro-qty-2 input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-right: none;
+            height: 30px;
+        }
+
+        .pro-qty-2 button {
+            background-color: transparent;
+            border: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .pro-qty-2 button:hover {
+            color: blueviolet;
+        }
+    </style>
+    <div id="snackbar"></div>
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const updateQuantity = async (cartId, newQuantity, priceElement, unitPrice) => {
+        const quantities = {};
+        quantities[cartId] = newQuantity;
+
+        try {
+            const response = await fetch('/update_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quantities })
+            });
+
+            if (!response.ok) {
+                throw new Error('Cart update failed');
+            }
+
+            const data = await response.json();
+            const newTotalPrice = unitPrice * newQuantity;
+            priceElement.textContent = `₹${newTotalPrice.toFixed(2)}`;
+            console.log('Cart updated successfully:', data);
+
+            // Fetch updated delivery charge and update UI
+            updateDeliveryCharge(); // Call a function to update the delivery charge
+            updateCartPrices(); // Implement this function to update other parts of the UI as needed
+        } catch (error) {
+            console.error('Error updating cart:', error);
+            // Handle error scenarios, such as displaying an error message to the user
+        }
+    };
+
+    const handleQuantityChange = async (button, increment) => {
+        const cartId = button.getAttribute('data-cart-id');
+        const quantityInput = document.getElementById(`quantityUpdate-${cartId}`);
+        const priceElement = document.getElementById(`priceUpdate-${cartId}`);
+        const unitPrice = parseFloat(priceElement.getAttribute('data-unit-price'));
+        const availableQuantity=parseInt(quantityInput.getAttribute('data-available-quantity'))
+        let currentValue = parseInt(quantityInput.value);
+
+        if (!isNaN(currentValue)) {
+            const newQuantity = currentValue + increment;
+            if (newQuantity >= 1 && newQuantity <= availableQuantity) {
+                quantityInput.value = newQuantity;
+                await updateQuantity(cartId, newQuantity, priceElement, unitPrice);
+            }else if(newQuantity>availableQuantity){
+                showsnackbar(`cannot exceed available stock of ${availableQuantity} `)
+            }
+        }
+    };
+
+    // Function to fetch and update delivery charge
+    const updateDeliveryCharge = async () => {
+        try {
+            const response = await fetch('/get_delivery_charge');
+            if (!response.ok) {
+                throw new Error('Failed to fetch delivery charge');
+            }
+            const data = await response.json();
+            const deliveryCharge = data.deliveryCharge;
+            // Update delivery charge in UI
+            document.getElementById('deliveryCharge').textContent = `₹${deliveryCharge.toFixed(2)}`;
+        } catch (error) {
+            console.error('Error fetching delivery charge:', error);
+            // Handle error scenarios, such as displaying an error message to the user
+        }
+    };
+
+    // Add event listeners to quantity increase buttons
+    document.querySelectorAll('.qty-up').forEach(button => {
+        button.addEventListener('click', async () => {
+            await handleQuantityChange(button, 1);
+        });
+    });
+
+    // Add event listeners to quantity decrease buttons
+    document.querySelectorAll('.qty-down').forEach(button => {
+        button.addEventListener('click', async () => {
+            await handleQuantityChange(button, -1);
+        });
+    });
+
+    
+    updateDeliveryCharge();
+
+//subtotal,discount,total
+    function formatPrice(price){
+        return `${price.toFixed(2)}`
+    }
+
+    function calculatePrices(){
+        let subtotal=0;
+        let discount=0;
+        let total=0;
+
+        document.querySelectorAll('input[id^="quantityUpdate-"]').forEach(input=>{
+            const cartId = input.getAttribute('data-cart-id');
+            console.log('ca',cartId);
+        const quantity = parseInt(input.value);
+        const realPriceElement = document.getElementById(`product-price-${cartId}`);
+        console.log('rea',realPriceElement);
+        const priceElement = document.getElementById(`priceUpdate-${cartId}`);
+        console.log('pri',priceElement);
+        const unitPrice = parseFloat(priceElement.getAttribute('data-unit-price'));
+        console.log('uni',unitPrice);
+        const DiscPrice=parseFloat(realPriceElement.getAttribute('data-unit-rprice'));
+        console.log('dis',DiscPrice);
+        subtotal+=DiscPrice*quantity
+        total+=unitPrice*quantity
+        })
+        discount=subtotal-total
+        return {subtotal,total,discount}
+    }
+    function updateCartPrices(){
+        const prices=calculatePrices()
+        document.getElementById('subtotal').innerHTML= formatPrice(prices.subtotal)
+        document.getElementById('discount').innerHTML=formatPrice(prices.discount)
+        document.getElementById('total').innerHTML=formatPrice(prices.total)
+
+        localStorage.setItem('cartSubTotal', prices.subtotal.toString())
+        localStorage.setItem('cartDiscount',prices.discount.toString())
+        localStorage.setItem('cartTotal',prices.total.toString())
+    }
+
+
+  
+    updateCartPrices(); 
+
+
+    
+});
+
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+    const removeButtons = document.querySelectorAll('.closed');
+    removeButtons.forEach((button) => {
+        button.addEventListener('click', async function(event) {
+            event.preventDefault();
+            const productId = this.getAttribute('data-product-id');
+
+            try {
+                const response = await fetch(`/removeProduct/${productId}`, {
+                    method: "DELETE",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showsnackbar('Product has been removed');
+                    
+                    // Remove the product element from the DOM
+                    this.closest('.product-cart').remove();
+                   
+                } else {
+                    showsnackbar('Product not removed');
+                }
+            } catch (error) {
+                console.log('Error:', error.message);
+            }
+        });
+    });
+});
+function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+x.innerHTML=text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+
+    </script>
+    <%- include('../layout/userlayout/footer') -%>

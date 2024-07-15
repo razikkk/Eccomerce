@@ -1,0 +1,177 @@
+<%- include('../layout/adminlayout/header')-%>
+
+    <div class="col-10 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Basic form elements</h4>
+                <p class="card-description"> Basic form elements </p>
+                <form class="forms-sample" action="" method="POST" id="productEdit">
+                    <input type="hidden" id="productId" name="productId" value="<%= product._id %>"> <!-- Hidden field for productId -->
+    
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" class="form-control" id="productName" name="productName"
+                            value="<%= product.name %>" >
+                        <small id="productNameError" class="text-danger"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryName">Category Name</label>
+                        <select class="form-control" id="categoryName" name="categoryName" style="color: white;" required>
+                            <option disabled selected value="">Nothing selected</option>
+                            <% for (let i=0; i < category.length; i++) { %>
+                                <option value="<%= category[i].categoryName %>"
+                                    <%= product.categoryId.equals(category[i]._id) ? 'selected' : '' %>><%= category[i].categoryName %>
+                                </option>
+                            <% } %>
+                        </select>
+                        <small id="categoryError" class="text-danger"></small>
+                    </div>
+    
+                    <div style="height: 100px; width: 30%;">
+                        <label for="uploadImage" class="ocs-registration-label">Upload Image</label>
+                        <input type="file" id="uploadImage" name="image" accept="image/*" class="ocs-registration-input"
+                            multiple onchange="handleFileSelect(event)">
+                    </div>
+                    <div class="existing-images">
+                        <h6>Existing Images</h6>
+                        <% for (let i = 0; i < product.images.length; i++) { %>
+                            <div class="image-wrapper" style="box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+                                <img src="/static/user/images/<%= product.images[i] %>" class="existing-image"
+                                    width="150px" height="150px">
+                                <button type="button" class="close-button"
+                                    onclick="removeImage(this, <%= i %>)">x</button>
+                            </div>
+                        <% } %>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity"
+                            value="<%= product.stock %>" required>
+                        <small id="quantityError" class="text-danger"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" value="<%= product.price %>"
+                            required>
+                        <small id="priceError" class="text-danger"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="discountprice">Discount Price</label>
+                        <input type="text" class="form-control" id="discountprice" name="discountPrice"
+                            value="<%= product.discountPrice %>" required>
+                        <small id="discountPriceError" class="text-danger"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" class="form-control" name="productDescription" id="description"
+                            value="<%= product.description %>" required>
+                        <small id="productDescriptionError" class="text-danger"></small>
+                    </div>
+    
+                    <button type="submit" class="btn btn-primary me-2">Submit</button>
+                    <a href="/admin/products" class="btn btn-dark">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        let deletedIndices = []
+        function removeImage(buttonElement, index) {
+            const imageWrapper = buttonElement.closest('.image-wrapper')
+            imageWrapper.remove()
+            deletedIndices.push(index)
+        }
+        document.getElementById('productEdit').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const productName = document.getElementById('productName').value.trim();
+    const categoryName = document.getElementById('categoryName').value;
+    const price = parseFloat(document.getElementById('price').value.trim());
+    const discountPrice = parseFloat(document.getElementById('discountprice').value.trim());
+    const quantity = parseInt(document.getElementById('quantity').value.trim(), 10);
+    const description = document.getElementById('description').value.trim();
+    const images = document.getElementById('uploadImage').files;
+
+    // Clear all previous error messages
+    document.getElementById('productNameError').textContent = '';
+    document.getElementById('categoryError').textContent = '';
+    document.getElementById('priceError').textContent = '';
+    document.getElementById('discountPriceError').textContent = '';
+    document.getElementById('quantityError').textContent = '';
+    document.getElementById('productDescriptionError').textContent = '';
+
+    // Validation checks
+    let isValid = true;
+
+    if (productName == '') {
+        console.log("adklfjakdljsfkdfjksjdkfjkasjdklfjlkasjkdjflsjldjkfjsjk")
+        document.getElementById('productNameError').textContent = 'Product name is required';
+        isValid = false;
+    }
+
+    if (categoryName === '') {
+        document.getElementById('categoryError').textContent = 'Category is required';
+        isValid = false;
+    }
+
+    if (isNaN(price) || price <= 0) {
+        document.getElementById('priceError').textContent = 'Valid price is required';
+        isValid = false;
+    }
+
+    if (isNaN(discountPrice) || discountPrice <= 0 || discountPrice >= price) {
+        document.getElementById('discountPriceError').textContent = 'Valid discount price is required and should be less than the price';
+        isValid = false;
+    }
+
+    if (isNaN(quantity) || quantity < 0) {
+        document.getElementById('quantityError').textContent = 'Valid quantity is required';
+        isValid = false;
+    }
+
+    if (description === '') {
+        document.getElementById('productDescriptionError').textContent = 'Description is required';
+        isValid = false;
+    }
+
+    // Check if there are at least three images
+    const existingImages = document.querySelectorAll('.existing-image').length;
+    if (images.length + existingImages - deletedIndices < 3) {
+        alert('Please upload at least three images');
+        isValid = false;
+    }
+
+    if (isValid) {
+        const productId = document.getElementById('productId').value;
+
+        const formData = new FormData();
+        formData.append('productName', productName);
+        formData.append('categoryName', categoryName);
+        formData.append('price', price);
+        formData.append('discountPrice', discountPrice);
+        formData.append('quantity', quantity);
+        formData.append('productDescription', description);
+        formData.append('deletedImages', deletedIndices);
+
+        for (let i = 0; i < images.length; i++) {
+            formData.append('images', images[i]);
+        }
+
+        axios.post(`http://localhost:3000/admin/product/editProduct?id=${productId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            if (response.status === 200) {
+                window.location.href = '/admin/products';
+            }
+        })
+        .catch(error => {
+            console.error('Error updating product:', error);
+        });
+    }
+});
+    </script>

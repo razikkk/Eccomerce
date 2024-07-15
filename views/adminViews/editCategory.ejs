@@ -1,0 +1,64 @@
+<%- include('../layout/adminlayout/header')-%>
+
+<div class="col-md-6 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Horizontal Form</h4>
+            <p class="card-description"> Horizontal form layout </p>
+            <form class="forms-sample" id="editCategoryForm">
+                <div class="form-group row">
+                    <label for="exampleInputUsername2" class="col-sm-3 col-form-label">Edit Category</label>
+                    <div class="col-sm-9">
+                        <input type="hidden" id="categoryId" value="YOUR_CATEGORY_ID_HERE">
+                        <input type="text" class="form-control" name="categoryName" id="categoryName" placeholder="Enter Category Name">
+                        <p id="categoryNameError" style="color: red; display: none;">Category name is required</p>
+                        <button type="button" class="btn btn-primary me-2" style="margin-top: 20px;" onclick="editCategory()">Submit</button>
+                        <a class="btn btn-dark" style="margin-top: 20px;" href="/admin/category">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function editCategory() {
+        let name = document.getElementById('categoryName').value;
+        let nameError = document.getElementById('categoryNameError');
+        let validate = true;
+
+        
+
+        // Validation
+        if (name.trim() === '') {
+            nameError.style.display = 'block';
+            validate = false;
+        }
+
+        if (validate) {
+            try {
+                const categoryId = document.getElementById('categoryId').value;
+                const response = await fetch('/category/edit', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ categoryId, categoryName: name })
+                });
+
+                if (response.ok) {
+                    alert('Category edited successfully');
+                    window.location.href = '/admin/category'; // Redirect to category page
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'An error occurred');
+                }
+            } catch (error) {
+                console.log(error.message);
+                alert('An error occurred');
+            }
+        }
+    }
+</script>
+
+<%- include('../layout/adminlayout/footer')-%>

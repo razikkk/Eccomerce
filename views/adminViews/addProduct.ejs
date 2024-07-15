@@ -1,0 +1,153 @@
+<%- include('../layout/adminlayout/header')-%>
+
+    <div class="col-10 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Basic form elements</h4>
+                <p class="card-description"> Basic form elements </p>
+                <form class="forms-sample" id="form" action="/admin/product/addProduct" method="post"
+                    enctype="multipart/form-data" onsubmit="return validateForm()">
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" class="form-control" id="productName" name="name" placeholder="Name">
+                        <small id="productNameError" class="text-danger"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category Name</label>
+                        <select class="form-control" id="category" name="category" style="color: white;">
+                            <option disabled selected value="">Nothing selected</option>
+                            <% category.forEach(function(cat) { %>
+                                <option value="<%= cat._id %>">
+                                    <%= cat.categoryName %>
+                                </option>
+                                <% }); %>
+                        </select>
+                        <small id="categoryError" class="text-danger"></small>
+                    </div>
+
+                    <div style="height: 100px; width: 30%;">
+                        <label for="ocs-userImage" class="ocs-registration-label">Upload Image</label>
+                        <input type="file" id="ocs-userImage" name="image" accept="image/*"
+                            class="ocs-registration-input" multiple onchange="handleFileSelect(event)">
+                        <small id="imageError" class="text-danger"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity"
+                            placeholder="Enter the Quantity">
+                        <small id="quantityError" class="text-danger"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" placeholder="Enter the Price">
+                        <small id="priceError" class="text-danger"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="discountprice">Discount Price</label>
+                        <input type="text" class="form-control" id="discountprice" name="discountprice"
+                            placeholder="Enter the Discount Price">
+                        <small id="discountPriceError" class="text-danger"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exampleTextarea1">Description</label>
+                        <textarea class="form-control" name="description" id="exampleTextarea1" rows="4"></textarea>
+                        <small id="productDescriptionError" class="text-danger"></small>
+                    </div>
+
+                    <button type="submit" onclick="validate(event)" class="btn btn-primary me-2">Submit</button>
+                    <a href="/admin/product" class="btn btn-dark">cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function validate() {
+            let isValid = true;
+
+            const productName = document.getElementById('productName').value.trim();
+            const category = document.getElementById('category').value;
+            const images = document.getElementById('ocs-userImage').files;
+            const quantity = document.getElementById('quantity').value.trim();
+            const price = document.getElementById('price').value.trim();
+            const discountPrice = document.getElementById('discountprice').value.trim();
+            const description = document.getElementById('exampleTextarea1').value.trim();
+
+            const productNameError = document.getElementById('productNameError');
+            const categoryError = document.getElementById('categoryError');
+            const imageError = document.getElementById('imageError');
+            const quantityError = document.getElementById('quantityError');
+            const priceError = document.getElementById('priceError');
+            const discountPriceError = document.getElementById('discountPriceError');
+            const productDescriptionError = document.getElementById('productDescriptionError');
+
+            productNameError.textContent = '';
+            categoryError.textContent = '';
+            imageError.textContent = '';
+            quantityError.textContent = '';
+            priceError.textContent = '';
+            discountPriceError.textContent = '';
+            productDescriptionError.textContent = '';
+            
+
+            if (productName === '') {
+        productNameError.textContent = 'Product name is required';
+        isValid = false;
+    }
+
+    if (category === '') {
+        categoryError.textContent = 'Category is required';
+        isValid = false;
+    }
+
+    if (images.length < 3) {
+        imageError.textContent = 'Please upload at least three images';
+        isValid = false;
+    }
+
+    if (quantity === '' || isNaN(quantity) || quantity < 0) {
+        quantityError.textContent = 'Valid quantity is required';
+        isValid = false;
+    }
+
+    if (price === '' || isNaN(price) || price <= 0) {
+        priceError.textContent = 'Valid price is required';
+        isValid = false;
+    }
+
+    if (discountPrice !== '' && (isNaN(discountPrice) || discountPrice <= 0)) {
+        discountPriceError.textContent = 'Valid discount price is required';
+        isValid = false;
+    }
+
+    if (discountPrice !== '' && parseFloat(discountPrice) >= parseFloat(price)) {
+        discountPriceError.textContent = 'Discount price should be less than the regular price';
+        isValid = false;
+    }
+
+    if (description === '') {
+        productDescriptionError.textContent = 'Description is required';
+        isValid = false;
+    }
+
+    if (!isValid) {
+        event.preventDefault();
+    }
+    
+    return isValid;
+
+        }
+    </script>
+
+
+
+
+
+
+    <!-- CDNs -->
