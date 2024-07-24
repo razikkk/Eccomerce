@@ -4,6 +4,7 @@ const adminAuthController=require('../controller/adminController/adminAuthcontro
 const auth=require('../middleware/adminAuth')
 const adminUserController=require('../controller/adminController/adminUserController')
 const productController=require('../controller/adminController/productController')
+const orderController=require('../controller/adminController/adminOrderController')
 const config=require('../config/config')
 const session=require('express-session')
 const multer = require('multer');
@@ -68,4 +69,8 @@ adminRoute.get('/product/deletedProduct',auth.isLogin,productController.loadDele
 adminRoute.get('/product/restoreProduct',auth.isLogin,productController.restoreProduct)
 adminRoute.post('/product/editProduct',auth.isLogin,upload.any(),productController.editProduct)
 
+//order managment
+adminRoute.get('/orders',orderController.orderLoad)
+adminRoute.get('/orders/orderDetails/:orderId',orderController.OrderDetailsLoad)
+adminRoute.post('/orders/orderDetails/updateStatus',orderController.updateOrderStatus)
 module.exports=adminRoute

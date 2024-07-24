@@ -1,15 +1,23 @@
 const { isLogin } = require('../../middleware/userAuth')
-const Product=require('../../models/products')
-
-const Category=require('../../models/category')
+const Product = require('../../models/products')
+const User = require('../../models/userModel')
+const Category = require('../../models/category');
+const userModel = require('../../models/userModel');
 
 
 
 const loadShop = async (req, res) => {
     try {
         const userId = req.session.userId;
+        console.log(userId)
+        let wishlistProduct = await User.findById(userId);
+        console.log(wishlistProduct,'vhvhvhvhvhvhihg')
+        wishlistProduct = wishlistProduct.wishlist;
         const category = req.query.category || '';
-       
+        let user = null
+        if (user) {
+            user = await User.findById(userId)
+        }
         const minPrice = req.query.minPrice || '';
         const maxPrice = req.query.maxPrice || '';
         const page = parseInt(req.query.page) || 1;
@@ -25,7 +33,7 @@ const loadShop = async (req, res) => {
                 filter.categoryId = null;
             }
         }
-        
+
         if (minPrice && maxPrice) {
             filter['discountPrice'] = { $gte: parseFloat(minPrice), $lte: parseFloat(maxPrice) };
         } else if (minPrice) {
@@ -37,7 +45,7 @@ const loadShop = async (req, res) => {
             name: { $regex: new RegExp(searchQuery, 'i') }
         } : {};
         const combinedFilter = { ...filter, ...searchFilter };
-        console.log(combinedFilter,'ith');
+        console.log(combinedFilter, 'ith');
         const totalProducts = await Product.countDocuments(combinedFilter);
         const products = await Product.aggregate([
             { $match: combinedFilter },
@@ -55,25 +63,27 @@ const loadShop = async (req, res) => {
         console.log(combinedFilter);
         console.log(products);
         const categories = await Category.find({ is_delete: false });
-        
-       
+
+
         res.render('shop', {
             products,
             categories,
-           
+            user,
             currentPage: page,
             totalPages: Math.ceil(totalProducts / limit),
             totalProducts,
             sort: sortOption,
             search: searchQuery,
             category,
-            
             minPrice,
             maxPrice,
-            isLogin:req.session.userId?true:false
-            
+            isLogin: req.session.userId ? true : false,
+            wishlistProduct
+
+
         });
     } catch (error) {
+        console.log(error)
         res.status(500).send('Internal Server Error');
     }
 };
@@ -102,14 +112,61 @@ function getSortCriteria(sortOption) {
     }
 };
 
+function getSortCriteria(sortOption) {
+    switch (sortOption) {
+        case 'price-asc':
+            return { 'discountPrice': 1 };
+        case 'price-desc':
+            return { 'discountPrice': -1 };
+        case 'name-asc':
+            return { name: 1 };
+        case 'name-desc':
+            return { name: -1 };
+        case 'rating-asc':
+            return { rating: 1 };
+        case 'rating-desc':
+            return { rating: -1 };
+        case 'new-arrivals':
+            return { createdAt: -1 };
+        case 'popularity':
+        default:
+            return { orderCount: -1 };
+    }
+}
+
+
+function getSortCriteria(sortOption) {
+    switch (sortOption) {
+        case 'price-asc':
+            return { 'discountPrice': 1 };
+        case 'price-desc':
+            return { 'discountPrice': -1 };
+        case 'name-asc':
+            return { name: 1 };
+        case 'name-desc':
+            return { name: -1 };
+        case 'rating-asc':
+            return { rating: 1 };
+        case 'rating-desc':
+            return { rating: -1 };
+        case 'new-arrivals':
+            return { createdAt: -1 };
+        case 'popularity':
+            return { orderCount: -1 };
+        case 'popularity':
+        default:
+            return { popularity: -1 };
+    }
+};
 
 
 
-const loadProductDetails=async(req,res)=>{
+
+const loadProductDetails = async (req, res) => {
     try {
-        let productDetail=await Product.findById(req.params.productId)
-      
-        res.render('productDetails',{isLogin:req.session.userId?true:false,productDetail})
+        let productDetail = await Product.findById(req.params.productId)
+
+        res.render('productDetails', { isLogin: req.session.userId ? true : false, productDetail })
     } catch (error) {
         console.log(error.message)
     }
@@ -119,9 +176,9 @@ const loadProductDetails=async(req,res)=>{
 
 
 
-module.exports={
+module.exports = {
     loadShop,
-    
+
     loadProductDetails
-    
+
 }

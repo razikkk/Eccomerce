@@ -1,0 +1,105 @@
+<%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+<div class="breadcrumbs">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <p class="bread"><span><a href="/">Home</a></span> / <span>Show Order</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="colorlib-product">
+    <div class="container">
+        <div class="row row-pb-lg">
+            <div class="col-md-10 offset-md-1">
+                
+            </div>
+        </div>
+        <div class="row row-pb-lg">
+            <div class="col-md-12">
+                <div class="product-name d-flex">
+                    <div class="one-forth text-left px-4">
+                        <span>Order Details</span>
+                    </div>
+                    <div class="one-eight text-center">
+                        <span>Total Price</span>
+                    </div>
+                    <div class="one-eight text-center">
+                        <span>Payment</span>
+                    </div>
+                    <div class="one-eight text-center">
+                        <span>Method</span>
+                    </div>
+                    <div class="one-eight text-center px-4">
+                        <span>Order Status</span>
+                    </div>
+                </div>
+                
+                <% if (!orders || orders.length === 0) { %>
+                    <p class="text-center">No orders found.</p>
+                <% } else { %>
+                    <% orders.forEach(order => { %>
+                        <div class="product-cart d-flex mb-4">
+                            <div class="one-forth">
+                                <% if (order.items[0] && order.items[0].productId && order.items[0].productId.images && order.items[0].productId.images.length > 0) { %>
+                                    <a href="/profile/showOrder/showOrderDetails/<%= order._id %>">
+                                    <div class="product-img" style="background-image: url(/static/user/images/<%= order.items[0].productId.images[0] %>);"></div>
+                                </a>
+                                <% } else { %>
+                                    <div class="product-img" style="background-image: url(/static/user/images/default.jpg);"></div>
+                                <% } %>
+                                <div class="display-tc">
+                                   
+                                    <h3>Order ID: <%= order.orderId %></h3>
+                                   
+                                    <ul>
+                                        <% order.items.forEach(item => { %>
+                                            <li>Product Name:<%= item.productId.name %> </li><li> Qty: <%= item.quantity %></li>
+                                           
+                                        <% }) %>
+                                        <li>Date:<%= order.date.toLocaleDateString()%></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="price" style="color: #3498db;">₹<%= order.totalPrice %></span>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="payment" 
+                                          style="color: <% if (order.status === 'delivered') { %> green <% } else { %> black <% } %>;">
+                                        <% if (order.status === 'delivered') { %> 
+                                            Success 
+                                        <% } else { %> 
+                                            <%= order.paymentStatus %> 
+                                        <% } %>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="paymentMethod"><%= order.paymentMethod %></span>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="orderStatus"><%= order.status %></span>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<%- include('../layout/userlayout/footer') -%>
+

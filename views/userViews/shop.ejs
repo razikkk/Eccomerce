@@ -89,6 +89,48 @@
         text-align: center; /* Center align pagination links */
         margin-top: 20px; /* Space above pagination */
     }
+
+    .position-relative {
+    position: relative;
+}
+
+.wishlist-icon {
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s;
+    position: absolute;
+    bottom: 16px;  /* Adjust as needed */
+    right: 25px;   /* Adjust as needed */
+    color: gray;   /* Default color */
+}
+
+.wishlist-icon.active {
+    color: red;    /* Color when active */
+}
+
+.wishlist-icon.animate {
+    animation: heartbeat 0.5s ease;
+}
+
+@keyframes heartbeat {
+    0% {
+        transform: scale(1);
+    }
+    25% {
+        transform: scale(1.1);
+    }
+    50% {
+        transform: scale(1);
+    }
+    75% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+
 </style>
 
 <div class="breadcrumbs">
@@ -169,23 +211,28 @@
                     </form>
                 </div>
             </div>
-
             <div class="row row-pb-md" id="productsContainer">
                 <% products.forEach(product => { %>
-                    <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="col-md-3 col-lg-3 mb-4 text-center position-relative">
                         <a href="/shop/productDetails/<%= product._id %>" class="product-entry border" style="text-decoration: none; color: inherit;">
                             <div class="prod-img">
                                 <img src="/static/user/images/<%= product.images[0] %>" class="img-fluid" alt="<%= product.name %>">
                             </div>
                             <div class="desc">
                                 <h2><%= product.name %></h2>
-                                <del class="price" style="width: 30px;;">&#8377;<%= product.price%></del>
+                                <del class="price" style="width: 30px;">&#8377;<%= product.price %></del>
                                 <span class="price">&#8377;<%= product.discountPrice %></span>
+                                <%let res = wishlistProduct.filter((x)=>{%>
+                                    <% return  x==product._id %>
+                               <% }) %>
                             </div>
                         </a>
+                        <i class="wishlist-icon fa fa-heart <%= isLogin && wishlistProduct.filter((x)=>{product._id == x}).length ? 'active' : '' %>" onclick="toggleWishlist('<%= product._id %>', event)"></i>
                     </div>
-                <% }) %>
-            </div>
+                    <% }) %>
+                </div>
+                
+            
 
             <div class="row">
                 <div class="col-md-12 text-center">
@@ -226,6 +273,48 @@
                 urlParams.set('sort', selectedSortOption);
                 window.location.search = urlParams.toString();
             });
+
+            function toggleWishlist(productId, event) {
+  const icon = event.target;
+
+  if (icon.classList.contains('active')) {
+    fetch('/wishlist/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId: productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        icon.classList.remove('active', 'animate');
+      }
+    })
+    .catch(error => {
+      console.log(error.message);
+    });
+  } else {
+    fetch('/wishlist/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId: productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        icon.classList.add('active', 'animate');
+      }
+    })
+    .catch(error => {
+      console.log(error.message);
+    });
+  }
+}
+
+
 </script>
 
 <%- include('../layout/userlayout/footer') -%>

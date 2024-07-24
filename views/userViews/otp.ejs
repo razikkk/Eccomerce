@@ -1,127 +1,171 @@
 <%- include('../layout/userlayout/header') -%>
 
+<style>
+  #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #333; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
 
-<div
-class="d-flex justify-content-center align-items-center"
-style="height: 100vh"
->
-<form
-  method="post"
-  id="otpForm"
-  action=""
-  class="colorlib-form col-md-3"
-  style="height: auto"
->
-  <h2 class="text-center">Please enter OTP</h2>
-  <div class="row">
-    <div class="col-md-12">
-      <div class="form-group">
-        <input
-          type="text"
-          id="otpVal"
-          name="otpVal"
-          class="form-control"
-          placeholder="Enter OTP"
-        />
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+</style>
+
+  <div class="d-flex justify-content-center align-items-center" style="height: 100vh">
+    <form method="post" id="otpForm" action="" class="colorlib-form col-md-3" style="height: auto">
+      <h2 class="text-center">Please enter OTP</h2>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <input type="text" id="otpVal" name="otpVal" class="form-control" placeholder="Enter OTP" />
+          </div>
+        </div>
+
+        <input type="submit" class="btn btn-dark" />
       </div>
-    </div>
-
-    <input type="submit" class="btn btn-dark" />
+      <h5 class="text-center" id="otp-timer-container">
+        Resend otp in <span id="otp-timer">30</span> Sec
+      </h5>
+      <h5 class="text-center" id="otp-resend" style="display: none">
+        Missing your OTP? <span><a id="resend" href="">Resend</a></span>
+      </h5>
+    </form>
   </div>
-  <h5 class="text-center" id="otp-timer-container">
-    Resend otp in <span id="otp-timer">30</span> Sec
-  </h5>
-  <h5 class="text-center" id="otp-resend" style="display: none">
-    Missing your OTP?  <span><a id="resend" href="">Resend</a></span>
-  </h5>
-</form>
-</div>
+  <div id="snackbar"></div>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    let otpTimer = document.getElementById("otp-timer");
+    let otpTimerContainer = document.getElementById("otp-timer-container");
+    let otpResend = document.getElementById("otp-resend");
 
-<script>
-let otpTimer = document.getElementById("otp-timer");
-let otpTimerContainer = document.getElementById("otp-timer-container");
-let otpResend = document.getElementById("otp-resend");
+    let resend = document.getElementById("resend");
 
-let resend = document.getElementById("resend");
+    let otpForm = document.getElementById("otpForm");
+    let otpVal = document.getElementById("otpVal");
 
-let otpForm = document.getElementById("otpForm");
-let otpVal = document.getElementById("otpVal");
-
-function destroyOtp() {
-  axios
-    .get("/auth/destroy-otp")
-    .then((response) => {
-      console.log(response.data);
-    })
-    .catch((error) => {
-      console.error("There was an error!", error);
-    });
-}
-
-function otpTimerFunction() {
-  let k = 30;
-  function timerFunc() {
-    otpTimer.innerText = k;
-    k--;
-    if (k < 0) {
-      clearInterval(otpTimerHandler);
-      otpTimerContainer.style.display = "none";
-      otpResend.style.display = "block";
-
-      destroyOtp();
+    function destroyOtp() {
+      axios
+        .get("/auth/destroy-otp")
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.error("There was an error!", error);
+        });
     }
-  }
 
-  let otpTimerHandler = setInterval(() => {
-    timerFunc();
-  }, 1000);
+    function otpTimerFunction() {
+      let k = 30;
+      function timerFunc() {
+        otpTimer.innerText = k;
+        k--;
+        if (k < 0) {
+          clearInterval(otpTimerHandler);
+          otpTimerContainer.style.display = "none";
+          otpResend.style.display = "block";
+
+          destroyOtp();
+        }
+      }
+
+      let otpTimerHandler = setInterval(() => {
+        timerFunc();
+      }, 1000);
+    }
+
+    otpTimerFunction();
+
+    resend.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      axios
+        .post("/registration/otp/email")
+        .then((response) => {
+          console.log(response);
+        })
+        .catch((error) => {
+          console.log("it is an error", error);
+        });
+
+      otpTimerFunction();
+
+      otpTimerContainer.style.display = "block";
+      otpResend.style.display = "none";
+    });
+
+    otpForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      axios
+        .post("/registration/otp/verify", { otpVal: otpVal.value })
+        .then((response) => {
+          console.log(response);
+          if (response.status === 200) {
+            showsnackbar('successfully registered')
+            window.location.href = "/";
+          }
+        })
+        .catch((error) => {
+          console.log("it is an error", error);
+          if (error.response.status === 400) {
+            showsnackbar('ente a valid otp')
+          }
+        });
+    });
+
+
+    function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+      x.innerHTML=text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
 }
-
-otpTimerFunction();
-
-resend.addEventListener("click", (event) => {
-  event.preventDefault();
-
-  axios
-    .post("/registration/otp/email")
-    .then((response) => {
-      console.log(response);
-    })
-    .catch((error) => {
-      console.log("it is an error", error);
-    });
-
-  otpTimerFunction();
-
-  otpTimerContainer.style.display = "block";
-  otpResend.style.display = "none";
-});
-
-otpForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  axios
-    .post("/registration/otp/verify", { otpVal: otpVal.value })
-    .then((response) => {
-      console.log(response);
-      if (response.status === 200) {
-        alert('successfully registered')
-        window.location.href = "/";
-      }
-    })
-    .catch((error) => {
-      console.log("it is an error", error);
-      if (error.response.status === 400) {
-        alert('ente a valid otp')
-      }
-    });
-});
-</script>
+  </script>
 
 
 
 
 
-<%- include('../layout/userlayout/footer') -%>
+  <%- include('../layout/userlayout/footer') -%>

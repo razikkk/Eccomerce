@@ -176,7 +176,15 @@
                                         <div class="grand-total">
                                             <p>Total : <span id="total"></span></p>
                                         </div>
-                                        <a href="/cart/checkout" id="checkoutButton" class="btn btn-dark">Check Out</a>
+                                       
+                                        <% if (cartDatas && cartDatas.products && cartDatas.products.length > 0) { %>
+                                            <a href="/cart/checkout" id="checkoutButton" class="btn btn-dark">Check Out</a>
+                                        <% } else { %>
+                                            <button class="btn btn-dark" id="checkoutButton">Check Out</button>
+                                            
+                                        <% } %>
+
+                                        
                                 </div>
                             </div>
                         </div>
@@ -184,63 +192,7 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-sm-8 offset-sm-2 text-center colorlib-heading colorlib-heading-sm">
-                    <h2>Related Products</h2>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-3 col-lg-3 mb-4 text-center">
-                    <div class="product-entry border">
-                        <a href="#" class="prod-img">
-                            <img src="/static/user/images/item-1.jpg" class="img-fluid"
-                                alt="Free html5 bootstrap 4 template">
-                        </a>
-                        <div class="desc">
-                            <h2><a href="#">Women's Boots Shoes Maca</a></h2>
-                            <span class="price">$139.00</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-lg-3 mb-4 text-center">
-                    <div class="product-entry border">
-                        <a href="#" class="prod-img">
-                            <img src="/static/user/images/item-2.jpg" class="img-fluid"
-                                alt="Free html5 bootstrap 4 template">
-                        </a>
-                        <div class="desc">
-                            <h2><a href="#">Women's Minam Meaghan</a></h2>
-                            <span class="price">$139.00</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-lg-3 mb-4 text-center">
-                    <div class="product-entry border">
-                        <a href="#" class="prod-img">
-                            <img src="/static/user/images/item-3.jpg" class="img-fluid"
-                                alt="Free html5 bootstrap 4 template">
-                        </a>
-                        <div class="desc">
-                            <h2><a href="#">Men's Taja Commissioner</a></h2>
-                            <span class="price">$139.00</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-lg-3 mb-4 text-center">
-                    <div class="product-entry border">
-                        <a href="#" class="prod-img">
-                            <img src="/static/user/images/item-4.jpg" class="img-fluid"
-                                alt="Free html5 bootstrap 4 template">
-                        </a>
-                        <div class="desc">
-                            <h2><a href="#">Russ Men's Sneakers</a></h2>
-                            <span class="price">$139.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+           
     <style>
         .pro-qty-2 {
             display: flex;
@@ -275,6 +227,15 @@
     <div id="snackbar"></div>
     <script>
   document.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.getElementById('checkoutButton');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', function(event) {
+            if (<%= cartDatas && cartDatas.products && cartDatas.products.length === 0 %>) {
+                event.preventDefault();
+                showsnackbar('Cannot proceed to checkout. Your cart is empty.');
+            }
+        });
+    }
     const updateQuantity = async (cartId, newQuantity, priceElement, unitPrice) => {
         const quantities = {};
         quantities[cartId] = newQuantity;
@@ -430,11 +391,17 @@
                 const data = await response.json();
                 if (data.success) {
                     showsnackbar('Product has been removed');
-                    
+                     
                     // Remove the product element from the DOM
                     this.closest('.product-cart').remove();
-                   
-                } else {
+                setTimeout(()=>{
+                    window.location.reload()
+                },1000)
+
+                
+                }
+                
+                 else {
                     showsnackbar('Product not removed');
                 }
             } catch (error) {
@@ -442,7 +409,19 @@
             }
         });
     });
+ 
 });
+
+
+
+
+
+
+
+
+
+
+
 function showsnackbar(text) {
   // Get the snackbar DIV
   var x = document.getElementById("snackbar");

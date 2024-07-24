@@ -1,10 +1,22 @@
 const Address=require('../../models/addressModel')
+const Cart=require('../../models/cartModel')
+
+
+
+
+
+
+
+
+
 
 const checkoutLoad=async(req,res)=>{
     try {
         const user=req.session.userId
         const address=await Address.find({userId:user})
-        res.render('checkout',{user:user,isLogin: req.session.userId ? true : false,address:address})
+        const cartDatas=await Cart.findOne({userId:user}).populate("products.productId");
+
+        res.render('checkout',{user:user,isLogin: req.session.userId ? true : false,address:address,cartDatas:cartDatas})
     } catch (error) {
         console.log(error.message)
     }
@@ -31,6 +43,7 @@ const checkOutAddAddress=async(req,res)=>{
         console.log(error.message)
     }
   }
+
 
 module.exports={
     checkoutLoad,

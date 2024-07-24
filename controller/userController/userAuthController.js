@@ -3,23 +3,32 @@ const User = require('../../models/userModel');
 const Address=require('../../models/addressModel')
 require('dotenv').config();
 const bcrypt=require('bcrypt')
-
-
+const crypto=require('crypto')
+const nodemailer=require('nodemailer')
+const Order=require('../../models/orderModel')
+const Product=require('../../models/products')
 const sendMail=require('../../util/mailSender')
 const generateOtp=require('../../util/generateOtp')
 
 
 
 //password hashing
-async function securePassword(password){
-    const passwordHash=await bcrypt.hash(password,10)
-    return passwordHash
-}
+const securePassword = async (password) => {
+  if (!password) {
+    throw new Error('Password is required');
+  }
+
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  return hashedPassword;
+};
+
   
 // passport-setup.js
 const passport = require('passport');
 const { isLogin } = require('../../middleware/userAuth');
-const { findById } = require('../../models/cartModel');
+const { findById, findOne } = require('../../models/cartModel');
+const products = require('../../models/products');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 
@@ -78,20 +87,6 @@ const googleSuccess = async (req, res,next) => {
 
 const loadHomePage=async(req,res)=>{
     try {
-        // let userDetails;
-        // // if(req.session.userId){
-        //     // userDetails = await User.findById({_id:req.session.userId});
-        // }
-
-        // if(userDetails){
-        //     // console.log("8888888888",userDetails,'9999999999999')
-            
-        // }else{
-        //     console.log('hhshsh')
-        //     res.render('home',{})
-            
-        // }
-
         res.render('home',{isLogin: req.session.userId ? true : false})
     } catch (error) {
         console.log(error.message)
@@ -106,16 +101,6 @@ const loginLoad=async(req,res)=>{
 }
 const registerLoad = async (req, res) => {
   try {
-    // let userDetails;
-    // if(req.session.userId){
-    //     userDetails=await User.findById({_id:req.session.userId})
-    // }
-    // if(userDetails){
-    //     res.render('home',{name:userDetails.name})
-    // }
-    // else{
-    //     res.render('home',{name:null})
-    // }
     if (req.method == "GET") {
       console.log("4");
       res.render("registration", { isLogin: req.session.userId ? true : false });
@@ -236,7 +221,9 @@ const verifyLogin = async(req,res)=>{
         
          const userData = await User.findOne({email:email});
     
-        
+        if(userData.is_blocked){
+          return res.render('login',{message:"your account has been blocked",isLogin: req.session.userId ? true : false})
+        }
         //  console.log(email,password,userData,'hhhh')
 
         
@@ -429,6 +416,247 @@ const verifyLogin = async(req,res)=>{
     }
 };
 
+const loadForgotPassword=async(req,res)=>{
+  try {
+    const userData=await User.findOne({_id:req.session.userId})
+    res.render('forgotPassword',{isLogin: req.session.userId ? true : false,user:userData})
+  } catch (error) {
+    
+  }
+}
+const resetPassword = async (req, res) => {
+  try {
+      const user = await User.findOne({ email: req.body.email });
+
+      if (user) {
+          if (user. googleId) {
+              return res.status(400).json({ message: 'Unable to change password. Your account is linked with Google.' });
+          }
+
+          const token = crypto.randomBytes(20).toString('hex');
+          req.session.token = token;
+          req.session.email = req.body.email;
+
+          const mailOptions = {
+              from: process.env.EMAIL,
+              to: req.body.email,
+              subject: 'Your Password Reset Link',
+              html: `
+              <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f9f9f9;">
+                  <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+                      <h3>Reset Your Password</h3>
+                      <p>Click the link below to reset your password:</p>
+                      <a href="http://localhost:3000/resetPassword?token=${token}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                      <p>Thanks for using our service!</p>
+                      <p>Best regards,<br>The ESSENZI. Team,<br> Smell your Scents</p>
+                  </div>
+              </div>`
+          };
+
+          const transporter = nodemailer.createTransport({
+              service: 'Gmail',
+              port: 587,
+              secure: true,
+              auth: {
+                  user: process.env.EMAIL,
+                  pass: process.env.OTPPASS
+              }
+          });
+
+          transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                  res.status(500).json({ message: 'Error sending email' });
+              } else {
+                  res.status(200).json({ message: 'Password reset link has been sent to your email' });
+              }
+          });
+
+      } else {
+          res.status(400).json({ message: 'No such email exists. Please create an account.' });
+      }
+  } catch (err) {
+      console.log(err.message);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const newPasswordForm = async (req, res) => {
+  try {
+      const token = req.query.token;
+
+      if (!token) {
+          return res.redirect('/login');
+      }
+
+      const userData = await User.findOne({ email: req.session.email });
+      res.render('resetPassword', { token, user: userData, isLogin: req.session.userId ? true : false });
+  } catch (error) {
+      console.log(error);
+      res.status(500).send('Server error');
+  }
+};
+
+
+const newPassword = async (req, res) => {
+  try {
+      const token = req.body.token;
+      const password = req.body.password;
+
+      // Ensure the password is provided
+      if (!password) {
+          return res.status(400).json({ message: 'Password is required' });
+      }
+
+      if (token === req.session.token) {
+          const hashedPassword = await securePassword(password);
+
+          await User.findOneAndUpdate(
+              { email: req.session.email },
+              { password: hashedPassword }
+          );
+
+          delete req.session.token;
+
+          res.status(200).json({ message: 'Password reset successful' });
+      } else {
+          res.status(400).send('Invalid token');
+      }
+  } catch (error) {
+      console.log(error);
+      res.status(500).send('Server error');
+  }
+};
+
+
+const showOrderLoad=async(req,res)=>{
+  try {
+    const orders=await Order.find({userId:req.session.userId}).populate('items.productId',' name images quantity ').sort({date:-1})
+    
+    orders.forEach(order => {
+      console.log(`Order ID: ${order.orderId}`);
+      order.items.forEach(item => {
+          console.log(`Item: ${JSON.stringify(item)}`);
+          console.log(`Product ID: ${item.productId._id}`);
+          console.log(`Product Images: ${item.productId.images}`);
+          console.log(`Product Name: ${item.productId.name}`);
+          console.log(`Quantity: ${item.quantity}`);
+      });
+  });
+    res.render('showOrder',{isLogin: req.session.userId ? true : false,orders:orders})
+  } catch (error) {
+    console.log(error.message)
+  }
+}
+
+const showOrderDetails=async(req,res)=>{
+  try {
+    const orderId=req.params.orderId;
+    console.log(orderId)
+    const order=await Order.findById(orderId).populate("items.productId",'name images price description')
+    console.log(order)
+    if(!order){
+      res.send("no order found")
+    }
+    res.render("showOrderDetails",{isLogin: req.session.userId ? true : false,order:order})
+  } catch (error) {
+    console.log(error.message)
+  }
+}
+
+const cancelOrder=async(req,res)=>{
+  try {
+    const {orderId,itemId}=req.params
+    const order=await Order.findById(orderId)
+    if(!order){
+      return res.status(404).json({success:false,message:"order not found"})
+    }
+    const item = order.items.id(itemId)
+    if(!item){
+      return res.status(404).json({success:false,message:"item not found"})
+    }
+    if(order.status !=='pending' || item.itemStatus!=='ordered'){
+      return res.status(400).json({success:false,message:"cannot cancel order"})
+    }
+    item.itemStatus = 'cancelled'
+    order.status = order.items.every( i => i.itemStatus === 'cancelled') ? 'cancelled' : order.status
+
+    const product = await Product.findById(item.productId)
+    if(!product){
+      return res.status(404).json({success:false,message:"product not found"})
+    }
+    product.stock+=item.quantity
+    await product.save()
+    await order.save()
+    res.json({success:true})
+    
+  } catch (error) {
+    console.log(error.message)
+  }
+}
+
+// Get Wishlist
+const getWishlist = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.redirect('/login'); // Redirect to login if no user session
+    }
+
+    const user = await User.findById(userId).populate('wishlist');
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    res.render('addToWishlist', { isLogin: req.session.userId ? true : false, products: user.wishlist });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Server error');
+  }
+};
+
+
+// Add to Wishlist
+const addToWishlist = async (req, res) => {
+  const { productId } = req.body;
+  const userId = req.session.userId;
+
+  try {
+    const user = await User.findById(userId);
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    if (!user.wishlist.includes(productId)) {
+      user.wishlist.push(productId);
+      await user.save();
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Remove from Wishlist
+const removeFromWishlist = async (req, res) => {
+  const { productId } = req.body;
+  const userId = req.session.userId;
+
+  try {
+    const user = await User.findById(userId);
+    user.wishlist = user.wishlist.filter(id => !id.equals(productId));
+    await user.save();
+    res.json({ success: true });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports={
     loadHomePage,
     loginLoad,
@@ -448,7 +676,17 @@ module.exports={
     deleteAddress,
     editAddress,
     editProfile,
-    changePassword
+    changePassword,
+    loadForgotPassword,
+    resetPassword,
+    newPasswordForm,
+    newPassword,
+    showOrderLoad,
+    showOrderDetails,
+    cancelOrder,
+    getWishlist,
+    addToWishlist,
+    removeFromWishlist
 
     
     

@@ -158,9 +158,17 @@
                         <div class="cart-detail">
                             <h2>Cart Total</h2> 
                             <p>Subtotal:<span id="checkoutSubTotal">₹0.00</span></p> 
-                                        <p>1 x Product Name <span>₹0.00</span></p>
+
+                            <% if (cartDatas && cartDatas.products && cartDatas.products.length > 0) { %>
+                                <% cartDatas.products.forEach(item => { %>
+                                    <p><%= item.quantity %> x <%= item.productId.name %> <span> &#8377;<%= (item.productId.discountPrice * item.quantity).toFixed(2) %></span></p>
+                                <% }) %>
+                            <% } else { %>
+                                <p>Your cart is empty.</p>
+                            <% } %>
+                            
                                         <p>Discount: <span id="checkoutDiscount">₹0.00</span></p>
-                               <p>Shipping <span>₹00.00</span></p>
+                                <p>Delivery : <span class="text-success">FREE <del class="text-muted">40</del></span></p>
                                 <p>Total: <span id="checkoutTotal">₹0.00</span></p>
                             
                         </div>
@@ -226,14 +234,14 @@
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <div class="radio">
-                                        <label><input type="radio" name="optradio">RazorPay</label>
+                                        <label><input type="radio" value="RazorPay" name="optradio">RazorPay</label>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-12">
                                     <div class="radio">
-                                        <label><input type="radio" name="optradio"> Cash On Delivery</label>
+                                        <label><input type="radio" value="cod" name="optradio"> Cash On Delivery</label>
                                     </div>
                                 </div>
                             </div>
@@ -425,6 +433,149 @@
   setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
 }
        
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const placeOrderBtn = document.querySelector('.btn-dark');
+    placeOrderBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        placeOrder();
+    });
+});
+
+async function placeOrder() {
+    // Check if an address is selected
+    const selectedAddress = document.querySelector('input[name="address"]:checked');
+    if (!selectedAddress) {
+        Swal.fire('Error', 'Please select an address', 'error');
+        return;
+    }
+
+    // Check if a payment method is selected
+    const selectedPaymentMethod = document.querySelector('input[name="optradio"]:checked');
+    if (!selectedPaymentMethod) {
+        Swal.fire('Error', 'Please select a payment method', 'error');
+        return;
+    }
+
+    // Get the total price from the DOM
+    const totalPrice = parseFloat(document.getElementById('checkoutTotal').textContent.replace('₹', ''));
+
+    // Confirm order placement
+    const result = await Swal.fire({
+        title: 'Confirm Order',
+        text: 'Are you sure you want to place this order?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, place order',
+        cancelButtonText: 'No, cancel'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const orderData = {
+                selectedAddress: selectedAddress.value,
+                paymentMethod: selectedPaymentMethod.value,
+                totalPrice: totalPrice
+            };
+            console.log(orderData);
+
+            const response = await fetch('/cart/createOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            
+            const data = await response.json()
+
+                if (response.ok) {
+                    console.log('Server response:', data); // Log the full response
+
+                    if (data.success && data.paymentStatus == 'COD') {
+                        Swal.fire('Success', 'Order placed successfully!', 'success').then(() => {
+                            window.location.href = '/orderComplete';
+                        });
+                    }if(data.status == 'success' && data.paymentStatus == 'ONLINE-PAYMENT'){
+                        razorpayPayment(data.newOrder)
+                    }else {
+                        if (data.message === "Cannot place order in COD") {
+                            Swal.fire('Error', 'Cash on Delivery is not available for orders above ₹10,000', 'error');
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to place order. Please try again.', 'error');
+                        }
+                    }
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            
+        } catch (error) {
+            console.error('Error placing order:', error);
+            console.error('Error details:', error.message);
+            Swal.fire('Error', `An unexpected error occurred. Please try again. Error: ${error.message}`, 'error');
+        }
+    }
+}
+function razorpayPayment(order) {
+    try {
+        var options = {
+            "key": "rzp_test_6ytH1LIMzwzSEq", // Enter the Key ID generated from the Dashboard
+            "amount": order.amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+            "currency": "INR",
+            "name": "ESSENZI",
+            "description": "Test Transaction",
+            "image": "https://example.com/your_logo",
+            "order_id": order.id, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+            "handler": function (response) {
+                console.log("response:---", response)
+                verifyPayment(response, order);
+            },
+            "prefill": {
+                "name": "Gaurav Kumar",
+                "email": "gaurav.kumar@example.com",
+                "contact": "9544880584",
+            },
+            "notes": {
+                "address": "Razorpay Corporate Office"
+            },
+            "theme": {
+                "color": "#3399cc"
+            }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+        rzp1.on('error', () => {
+            console.log("error on razorpay")
+        })
+    } catch (error) {
+        console.log(error)
+        console.log(error.message)
+    }
+}
+const verifyPayment = async (payment, order) => {
+    try {
+        $.ajax({
+            url: '/cart/verifyPayment',
+            data: {
+                payment,
+                order
+            },
+            method: 'POST',
+            success: (response) => {
+                console.log("payment successfull")
+                if (response.paymentStatus == 'ONLINE-PAYMENT-SUCCESS') {
+                    location.href = '/success'
+                }
+            }
+        })
+
+    } catch (error) {
+        console.log(error)
+    }
+}
 </script>
 
 <%- include('../layout/userlayout/footer') -%>

@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    wishlist:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"product"
+    }],
     is_blocked: {
         type: Boolean,
         required: true,

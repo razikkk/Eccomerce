@@ -181,12 +181,14 @@
                 <h4 style="color: red; text-align: center;"><%= message %></h4>
             <% } %>
             <form action="/login" method="post" id="loginForm">
-                <input type="email" name="email" id="email" placeholder="Enter Email">
+                <input type="email" name="email" id="email"  placeholder="Enter Email">
                 <p id="emailError" style="display: none; color: red;">Email is required</p>
                 <input type="password" name="password" id="password" placeholder="Enter Password">
                 <p id="passwordError" style="display: none; color: red;">Password is required</p>
+                <a href="/forgotPassword" style="padding-left: 270px; color: #007BFF;">forgot password?</a>
                 
                 <input type="submit" onclick="handleLogin()" id="loginButton" value="SUBMIT">
+                
             </form>
             <div id="or" style="text-align: center;">OR</div>
             <a class="google-login" href="/auth/google">
@@ -220,6 +222,9 @@
             }
             if (isValid) {
                 document.getElementById('loginForm').submit();
+
+
+                
             }
         }
         

@@ -10,6 +10,7 @@ const passport = require('passport');
 const userShopController=require('../controller/userController/userShopController')
 const cartController=require('../controller/userController/cartController')
 const checkoutController=require('../controller/userController/checkoutController')
+const orderController=require('../controller/userController/orderController')
 
 
 userRoute.use(session({
@@ -35,7 +36,10 @@ userRoute.get('/',userAuthController.loadHomePage)
 userRoute.get('/login',auth.isLogout,userAuthController.loginLoad)
 userRoute.post('/login',userAuthController.verifyLogin)
 userRoute.get('/logout',auth.isLogin,userAuthController.logout)
-
+userRoute.get('/forgotPassword',userAuthController.loadForgotPassword)
+userRoute.post('/forgotPassword',userAuthController.resetPassword)
+userRoute.get('/resetPassword',userAuthController.newPasswordForm)
+userRoute.post('/resetPassword',userAuthController.newPassword)
 //registration
 userRoute.get('/registration',  auth.isLogout, userAuthController.registerLoad)
 userRoute.post('/registration', auth.isLogout,  userAuthController.registerLoad)
@@ -71,6 +75,10 @@ userRoute.delete('/profile/showAddress/:addressId',userAuthController.deleteAddr
 userRoute.post('/profile/showAddress/edit',userAuthController.editAddress)
 userRoute.post('/profile/editProfile',userAuthController.editProfile)
 userRoute.post('/profile/changePassword',userAuthController.changePassword)
+userRoute.get('/profile/showOrder',userAuthController.showOrderLoad)
+userRoute.get('/profile/showOrder/showOrderDetails/:orderId',userAuthController.showOrderDetails)
+userRoute.post('/profile/showOrder/showOrderDetails/cancel/:orderId/:itemId',userAuthController.cancelOrder)
+
 
 //cart
 userRoute.get('/cart',auth.isLogin,cartController.loadCart)
@@ -82,6 +90,14 @@ userRoute.delete('/removeProduct/:productId',cartController.deleteFromCart)
 //checkout
 userRoute.get('/cart/checkout',auth.isLogin,checkoutController.checkoutLoad)
 userRoute.post('/cart/checkout',checkoutController.checkOutAddAddress)
+userRoute.post('/cart/createOrder',orderController.createOrder)
+userRoute.post('/cart/verifyPayment',orderController.verifyPayment)
+userRoute.get('/orderComplete',orderController.orderComplete)
+
+//wishlist
+userRoute.get('/wishlist',userAuthController.getWishlist)
+userRoute.post('/wishlist/add',userAuthController.addToWishlist)
+userRoute.post('/wishlist/remove',userAuthController.removeFromWishlist)
 module.exports = userRoute
 
     
