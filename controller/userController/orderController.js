@@ -22,17 +22,12 @@ const createOrder = async (req, res) => {
                 model: 'Category'
             }
         });
-
-        const addressId = req.body.selectedAddress
-        const addressFind= await Address.findById(addressId)
-        
-        
-
+        const addressId = req.body.selectedAddress;
+        const addressFind = await Address.findById(addressId);
         if (!addressFind) {
             return res.status(400).json({ success: false, message: 'Address not found' });
         }
 
-        
         const orderData = new Order({
             orderId: Math.floor(100000 + Math.random() * 900000),
             userId: req.session.userId,
@@ -48,60 +43,85 @@ const createOrder = async (req, res) => {
             },
             items: []
         });
+
         if (orderData.paymentMethod === "cod" && req.body.totalPrice > 10000) {
             return res.json({ success: false, message: "Cannot place order in COD" });
         }
-        if(orderData.paymentMethod =='cod' && req.body.totalPrice<=10000){
-            for (const item of cartData.products) {
-                let finalPrice = item.productId.price;
-                if (item.productId.discountPrice) {
-                    finalPrice = item.productId.discountPrice;
-                }
-                orderData.items.push({
-                    productId: item.productId._id,
-                    quantity: item.quantity
-                });
+
+        for (const item of cartData.products) {
+            let finalPrice = item.productId.price;
+            if (item.productId.discountPrice) {
+                finalPrice = item.productId.discountPrice;
+            }
+            orderData.items.push({
+                productId: item.productId._id,
+                quantity: item.quantity,
+                itemPrice:item.productId.price
+            });
+        }
+
+        if (orderData.paymentMethod === 'cod' && req.body.totalPrice <= 10000) {
+            // Reduce stock and save order for COD
+            for (const item of orderData.items) {
                 await Product.findByIdAndUpdate(
-                    item.productId._id,
+                    item.productId,
                     { $inc: { stock: -item.quantity } }
                 );
             }
-            orderData.paymentStatus = orderData.paymentMethod === "cod" ? "pending" : "completed";
-            
+            orderData.paymentStatus = "pending";
             await orderData.save();
-
-            res.json({ success: true ,paymentStatus:'COD'});
-        }
-
-
-       if(orderData.paymentMethod =='RazorPay'){
-            let razorpayOrder = await onlinePayment(orderData.totalPrice,orderData._id)
-            console.log(razorpayOrder,"kfj;akjskdjfaksjkdafajskdfas((((((((((((((((((((")
+            await Cart.deleteOne({ userId: req.session.userId });
+            res.json({ success: true, paymentStatus: 'COD' });
+        } else if (orderData.paymentMethod === 'RazorPay') {
+            // For Razorpay, we'll save the order but not reduce stock yet
+            orderData.paymentStatus = "pending";
+            await orderData.save();
+            let razorpayOrder = await onlinePayment(orderData.totalPrice, orderData._id);
             res.json({ status: 'success', paymentStatus: 'ONLINE-PAYMENT', newOrder: razorpayOrder });
-       }
+        }
     } catch (error) {
-        console.error('Error creating order:', error.message);
+        console.error('Error creating order:', error);
         res.status(500).json({ success: false, message: 'An unexpected error occurred. Please try again later.' });
     }
 };
 
-const verifyPayment = async(req,res)=>{
+const verifyPayment = async (req, res) => {
     try {
         if (verifyOnlinePayment(req.body)) {
-            const order = req.body.order;
+            const orderId = req.body.order.receipt;
             const userId = req.session.userId;
-            await Order.findOneAndUpdate({ _id: order.receipt }, { $set: { status: 'Placed' } })
-            const userData = await User.findOne({ _id: userId }).populate('cart.product').exec();
-            userData.cart = [];
-            await userData.save();
-            res.json({ status: 'success', paymentStatus: 'ONLINE-PAYMENT-SUCCESS' })
+
+            // Fetch the order
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return res.json({ status: 'failed', message: 'Order not found' });
+            }
+
+            // Update order status and payment status
+            order.status = 'pending';
+            order.paymentStatus = 'success';
+            await order.save();
+
+            // Reduce stock
+            for (const item of order.items) {
+                await Product.findByIdAndUpdate(
+                    item.productId,
+                    { $inc: { stock: -item.quantity } }
+                );
+            }
+
+            // Delete cart
+            await Cart.deleteOne({ userId: userId });
+
+            res.json({ status: 'success', paymentStatus: 'ONLINE-PAYMENT-SUCCESS' });
         } else {
-            res.json({ status: 'failed' })
+            res.json({ status: 'failed', message: 'Payment verification failed' });
         }
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        res.status(500).json({ status: 'failed', message: 'An error occurred during payment verification' });
     }
-}
+};
 
 
 const orderComplete=async(req,res)=>{
@@ -117,8 +137,10 @@ const orderComplete=async(req,res)=>{
     }
 }
 
+
 module.exports={
     createOrder,
     orderComplete,
-    verifyPayment
+    verifyPayment,
+   
 }

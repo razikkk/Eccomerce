@@ -1,0 +1,187 @@
+<%- include('../layout/adminlayout/header')-%>
+
+<div class="col-lg-10 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Hoverable Table</h4>
+            <p class="card-description">Add class <code>.table-hover</code></p>
+
+            <!-- Filter Section -->
+            <div class="d-flex justify-content-between mb-3">
+                <!-- Date Inputs and Filter Button on the Left -->
+                <div class="d-flex align-items-center" >
+                    <div class="form-group">
+                        <label for="startDate" class="mr-2">Start Date:</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="form-group ml-3">
+                        <label for="endDate" class="mr-2">End Date:</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                    <button id="filterButton" class="btn btn-primary ml-3" onclick="validateForm()">Filter</button>
+                </div>
+
+                <!-- Dropdown on the Right -->
+                <div class="d-flex align-items-center">
+                    <div class="form-group">
+                        <label for="filterDropdown" class="mr-2">Filter by:</label>
+                        <select id="interval" class="form-control" onchange="filterSalesInterval()">
+                            <option value="" disabled selected>Select an interval</option>
+                            <option value="daily">daily</option>
+                            <option value="weekly">weekly</option>
+                            <option value="monthly">monthly</option>
+                            <option value="yearly">yearly</option>
+
+                            <!-- Add more options as needed -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mb-3">
+                <button type="button" class="btn btn-light" id="downloadPdfBtn"
+                    style="box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2); margin-right: 10px;">
+                    <i class="mdi mdi-file-pdf"></i> Download Sales Report
+                </button>
+                <button type="button" class="btn btn-light" id="downloadExcelBtn"
+                    style="box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2);">
+                    <i class="mdi mdi-file-excel-box"></i> Download Sales Report
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Name</th>
+                            <th>Total Price</th>
+                            <th>Discount</th>
+                            <th>Payment Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders?.length > 0) { %>
+                            <% for (let i = 0; i < orders.length; i++) { %>
+                                <tr>
+                                    <td><%= new Date(orders[i].date).toLocaleDateString() %></td>
+                                    <td><%= orders[i].product.name %></td>
+                                    <td><%= orders[i].items.quantity %></td>
+                                    <td><%= orders[i].user.name %></td>
+                                    <td><%= orders[i].items.itemPrice * orders[i].items.quantity %></td>
+                                    <td><%= (orders[i].subtotal - orders[i].totalPrice) * orders[i].items.quantity %></td>
+                                    <td><%= orders[i].paymentMethod %></td>
+                                </tr>
+                            <% } %>
+                            <tr>
+                                <td colspan="4" class="text-right"><strong>Total Number of Sales:</strong></td>
+                                <td colspan="3"><%= totalSales %></td>
+                            </tr>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center">No data found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        margin-right: 10px;
+    }
+
+    #filterButton {
+        margin-left: 10px;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .ml-3 {
+        margin-left: 1rem;
+    }
+
+    .mr-2 {
+        margin-right: 0.5rem;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+<script>
+    document.getElementById("downloadPdfBtn").addEventListener("click", function () {
+        let doc = new window.jspdf.jsPDF();
+        let pageCenter = doc.internal.pageSize.getWidth() / 2;
+
+        doc.setFontSize(25);
+        doc.text("ESSENZI.", pageCenter, 10, { align: 'center' });
+        doc.setFontSize(15);
+        doc.text("Sales Report", pageCenter, 20, { align: 'center' });
+
+        let table = document.querySelector(".table");
+
+        doc.autoTable({ html: table, startY: 35 });
+
+        doc.save("SalesReport.pdf");
+    });
+    document.getElementById("downloadExcelBtn").addEventListener("click", function () {
+        let workbook = XLSX.utils.book_new();
+
+        let table = document.querySelector(".table");
+
+        let worksheet = XLSX.utils.table_to_sheet(table);
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
+
+        let range = XLSX.utils.decode_range(worksheet['!ref']);
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            let max_width = 0;
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                let cell_address = { c: C, r: R };
+                let cell_ref = XLSX.utils.encode_cell(cell_address);
+                if (!worksheet[cell_ref]) continue;
+                let cell_width = XLSX.SSF.format(cell_address, worksheet[cell_ref].v).length;
+                max_width = Math.max(max_width, cell_width);
+            }
+            worksheet['!cols'] = worksheet['!cols'] || [];
+            worksheet['!cols'][C] = { wch: max_width + 1 };
+        }
+
+        XLSX.writeFile(workbook, "Sales Report.xlsx", { bookSST: true, type: 'binary' });
+    });
+    function filterButton(){
+
+        document.getElementById('filterButton')
+    }
+    function filterSalesInterval() {
+        let interval = document.getElementById('interval').value
+        window.location.href = `/admin/filterSalesInterval?interval=${interval}`
+    }
+    function filterSalesReport() {
+        let startDate = document.getElementById('startDate').value
+        let endDate = document.getElementById('endDate').value
+        window.location.href = `/admin/filterSalesReport?startDate=${startDate}&endDate=${endDate}`
+    }
+
+    function validateForm() {
+        event.preventDefault()
+        const startDate = document.getElementById('startDate').value
+        const endDate = document.getElementById('endDate').value
+        if (!startDate || !endDate) {
+            alert("please select the start and end point")
+            return false;
+        }
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('start date should be less than end date')
+        }
+        filterSalesReport()
+    }
+</script>

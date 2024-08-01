@@ -9,9 +9,14 @@ const Order=require('../../models/orderModel')
 const Product=require('../../models/products')
 const sendMail=require('../../util/mailSender')
 const generateOtp=require('../../util/generateOtp')
+const Wallet = require('../../models/walletModel')
+const razorpay = require('razorpay')
 
 
-
+const instance = new razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 //password hashing
 const securePassword = async (password) => {
   if (!password) {
@@ -74,6 +79,16 @@ passport.deserializeUser(async (id, done) => {
 const googleSuccess = async (req, res,next) => {
     try{
         req.session.userId=req.user._id
+        const userId = req.session.userId
+        let userWallet = await Wallet.findOne({userId:userId}) 
+        if (!userWallet) {
+          userWallet = new Wallet({
+              userId: userId,
+              balance: 0.00
+          });
+      }
+
+      await userWallet.save();
         res.redirect('/');
     }catch(error){
         console.log(error.message);
@@ -192,6 +207,16 @@ const otp = async (req, res) => {
         const userData=await newUser.save();
         if (userData) {
             req.session.userId=userData._id
+          const userId = req.session.userId
+            let userWallet = await Wallet.findOne({userId:userId}) 
+            if (!userWallet) {
+              userWallet = new Wallet({
+                  userId: userId,
+                  balance: 0.00
+              });
+          }
+  
+          await userWallet.save();
             return res.redirect('/');
         } else {
             return res.status(500).json({ message: "User registration failed." });
@@ -220,7 +245,7 @@ const verifyLogin = async(req,res)=>{
         const password = req.body.password;
         
          const userData = await User.findOne({email:email});
-    
+    console.log(userData)
         if(userData.is_blocked){
           return res.render('login',{message:"your account has been blocked",isLogin: req.session.userId ? true : false})
         }
@@ -245,6 +270,7 @@ const verifyLogin = async(req,res)=>{
     res.render('login', {message: 'Please Enter an valid email', data: {email,password },isLogin: req.session.userId ? true : false})
    }
     } catch (error) {
+      console.log('ith')
         console.log(error.message);
     }
 }
@@ -528,25 +554,33 @@ const newPassword = async (req, res) => {
 };
 
 
-const showOrderLoad=async(req,res)=>{
+const showOrderLoad = async (req, res) => {
   try {
-    const orders=await Order.find({userId:req.session.userId}).populate('items.productId',' name images quantity ').sort({date:-1})
-    
-    orders.forEach(order => {
-      console.log(`Order ID: ${order.orderId}`);
-      order.items.forEach(item => {
-          console.log(`Item: ${JSON.stringify(item)}`);
-          console.log(`Product ID: ${item.productId._id}`);
-          console.log(`Product Images: ${item.productId.images}`);
-          console.log(`Product Name: ${item.productId.name}`);
-          console.log(`Quantity: ${item.quantity}`);
-      });
-  });
-    res.render('showOrder',{isLogin: req.session.userId ? true : false,orders:orders})
+    const userId = req.session.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 3;
+    const skip = (page - 1) * limit;
+
+    const orders = await Order.find({ userId })
+      .populate('items.productId', 'name images quantity')
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalOrders = await Order.countDocuments({ userId });
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    res.render('showOrder', {
+      isLogin: userId ? true : false,
+      orders,
+      currentPage: page,
+      totalPages
+    });
   } catch (error) {
-    console.log(error.message)
+    console.log(error.message);
   }
-}
+};
+
 
 const showOrderDetails=async(req,res)=>{
   try {
@@ -557,6 +591,7 @@ const showOrderDetails=async(req,res)=>{
     if(!order){
       res.send("no order found")
     }
+    // const item= order.items.find()
     res.render("showOrderDetails",{isLogin: req.session.userId ? true : false,order:order})
   } catch (error) {
     console.log(error.message)
@@ -579,11 +614,38 @@ const cancelOrder=async(req,res)=>{
     }
     item.itemStatus = 'cancelled'
     order.status = order.items.every( i => i.itemStatus === 'cancelled') ? 'cancelled' : order.status
-
     const product = await Product.findById(item.productId)
     if(!product){
       return res.status(404).json({success:false,message:"product not found"})
     }
+    if(order.paymentMethod == 'RazorPay'){
+
+      const totalPrice = order.totalPrice
+      console.log(totalPrice,'halo')
+      const userId = req.session.userId;
+      let userWallet = await Wallet.findOne({ userId: userId });
+
+      if (!userWallet) {
+        userWallet = new Wallet({
+            userId,
+            balance: totalPrice,
+            transactions: [{
+                type: 'credit',
+                amount: totalPrice,
+                description: 'Order canceled - refund added to wallet'
+            }]
+        });
+    } else {
+        userWallet.balance += totalPrice;
+        userWallet.transactions.push({
+            type: 'credit',
+            amount: totalPrice,
+            description: 'Order canceled - refund added to wallet'
+        });
+    }
+
+      await userWallet.save();
+  }
     product.stock+=item.quantity
     await product.save()
     await order.save()
@@ -608,7 +670,7 @@ const getWishlist = async (req, res) => {
     if (!user) {
       return res.status(404).send('User not found');
     }
-
+    console.log(user.wishlist)
     res.render('addToWishlist', { isLogin: req.session.userId ? true : false, products: user.wishlist });
   } catch (error) {
     console.log(error.message);
@@ -656,7 +718,116 @@ const removeFromWishlist = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+const closeFromWishlist = async (req, res) => {
+  try {
+      const userId = req.session.userId;
+      const productId = req.params.productId;
 
+      if (!userId) {
+          return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      const user = await User.findById(userId);
+
+      if (!user) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      user.wishlist.pull(productId);
+      await user.save();
+
+      res.json({ success: true });
+  } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+const walletLoad = async(req,res)=>{
+  try {
+    const userId = req.session.userId
+    const wallet = await Wallet.find({userId:userId})
+    res.render('wallet',{isLogin: req.session.userId ? true : false,wallet:wallet,razorpayKey: process.env.RAZORPAY_KEY_ID})
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const returnOrder = async (req, res) => {
+  const { orderId, itemId, action } = req.params;
+  try {
+      const order = await Order.findById(orderId);
+      const item = order.items.id(itemId);
+
+      if (!item) {
+          return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+
+      if (action === 'approved') {
+          item.returnStatus = 'approved';
+
+          // Find the user who placed the order
+          const user = await User.findById(order.userId);
+          if (!user) {
+              return res.status(404).json({ success: false, message: 'User not found' });
+          }
+
+          // Update the user's wallet balance
+          user.wallet += item.price;
+          await user.save();
+      } else if (action === 'rejected') {
+          item.returnStatus = 'rejected';
+      }
+
+      await order.save();
+      res.json({ success: true });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+const createOrder = async (req, res) => {
+  try {
+      const { amount } = req.body;
+      const options = {
+          amount: amount, // Amount in paise
+          currency: "INR",
+          receipt: "receipt#1"
+      };
+      const order = await instance.orders.create(options);
+      res.json({ orderId: order.id });
+  } catch (error) {
+      console.error('Error creating order:', error);
+      res.status(500).json({ error: 'Failed to create order' });
+  }
+};
+const verifyPaymentWallet = async (req, res) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature, amount } = req.body;
+
+  const generatedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
+
+  if (generatedSignature === razorpay_signature) {
+      // Payment is verified
+      const numericAmount = Number(amount);
+
+      const userId = req.session.userId;
+      let userWallet = await Wallet.findOne({ userId: userId });
+      if (!userWallet) {
+          userWallet = new Wallet({
+              userId: userId,
+              balance: numericAmount
+          });
+      } else {
+          userWallet.balance += numericAmount;
+      }
+      await userWallet.save();
+      res.json({ success: true });
+  } else {
+      res.json({ success: false, message: 'Invalid signature' });
+  }
+};
 module.exports={
     loadHomePage,
     loginLoad,
@@ -686,7 +857,14 @@ module.exports={
     cancelOrder,
     getWishlist,
     addToWishlist,
-    removeFromWishlist
+    removeFromWishlist,
+    closeFromWishlist,
+    walletLoad,
+    returnOrder,
+    createOrder,
+    verifyPaymentWallet
+
+    
 
     
     

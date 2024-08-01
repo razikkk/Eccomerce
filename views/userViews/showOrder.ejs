@@ -1,4 +1,14 @@
 <%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+<style>
+.product-img {
+    width: 100px; /* or appropriate width */
+    height: 100px; /* or appropriate height */
+    background-size: cover; /* Ensure the image covers the div */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Prevent image repeat */
+    
+}
+</style>
 <div class="breadcrumbs">
     <div class="container">
         <div class="row">
@@ -45,6 +55,7 @@
                                 <% if (order.items[0] && order.items[0].productId && order.items[0].productId.images && order.items[0].productId.images.length > 0) { %>
                                     <a href="/profile/showOrder/showOrderDetails/<%= order._id %>">
                                     <div class="product-img" style="background-image: url(/static/user/images/<%= order.items[0].productId.images[0] %>);"></div>
+                                  
                                 </a>
                                 <% } else { %>
                                     <div class="product-img" style="background-image: url(/static/user/images/default.jpg);"></div>
@@ -95,11 +106,30 @@
                 <% } %>
             </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <ul class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>">&laquo; Previous</a>
+                        </li>
+                    <% } %>
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                        </li>
+                    <% } %>
+                    <% if (currentPage < totalPages) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>">Next &raquo;</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
-
-
-
 <%- include('../layout/userlayout/footer') -%>
-

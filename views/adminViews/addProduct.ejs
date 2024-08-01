@@ -46,12 +46,7 @@
                         <small id="priceError" class="text-danger"></small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="discountprice">Discount Price</label>
-                        <input type="text" class="form-control" id="discountprice" name="discountprice"
-                            placeholder="Enter the Discount Price">
-                        <small id="discountPriceError" class="text-danger"></small>
-                    </div>
+                    
 
                     <div class="form-group">
                         <label for="exampleTextarea1">Description</label>
@@ -60,7 +55,7 @@
                     </div>
 
                     <button type="submit" onclick="validate(event)" class="btn btn-primary me-2">Submit</button>
-                    <a href="/admin/product" class="btn btn-dark">cancel</a>
+                    <a href="/admin/products" class="btn btn-dark">cancel</a>
                 </form>
             </div>
         </div>
@@ -76,7 +71,6 @@
             const images = document.getElementById('ocs-userImage').files;
             const quantity = document.getElementById('quantity').value.trim();
             const price = document.getElementById('price').value.trim();
-            const discountPrice = document.getElementById('discountprice').value.trim();
             const description = document.getElementById('exampleTextarea1').value.trim();
 
             const productNameError = document.getElementById('productNameError');
@@ -84,7 +78,6 @@
             const imageError = document.getElementById('imageError');
             const quantityError = document.getElementById('quantityError');
             const priceError = document.getElementById('priceError');
-            const discountPriceError = document.getElementById('discountPriceError');
             const productDescriptionError = document.getElementById('productDescriptionError');
 
             productNameError.textContent = '';
@@ -92,7 +85,6 @@
             imageError.textContent = '';
             quantityError.textContent = '';
             priceError.textContent = '';
-            discountPriceError.textContent = '';
             productDescriptionError.textContent = '';
             
 
@@ -118,16 +110,6 @@
 
     if (price === '' || isNaN(price) || price <= 0) {
         priceError.textContent = 'Valid price is required';
-        isValid = false;
-    }
-
-    if (discountPrice !== '' && (isNaN(discountPrice) || discountPrice <= 0)) {
-        discountPriceError.textContent = 'Valid discount price is required';
-        isValid = false;
-    }
-
-    if (discountPrice !== '' && parseFloat(discountPrice) >= parseFloat(price)) {
-        discountPriceError.textContent = 'Discount price should be less than the regular price';
         isValid = false;
     }
 

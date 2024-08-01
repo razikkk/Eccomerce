@@ -78,6 +78,9 @@ userRoute.post('/profile/changePassword',userAuthController.changePassword)
 userRoute.get('/profile/showOrder',userAuthController.showOrderLoad)
 userRoute.get('/profile/showOrder/showOrderDetails/:orderId',userAuthController.showOrderDetails)
 userRoute.post('/profile/showOrder/showOrderDetails/cancel/:orderId/:itemId',userAuthController.cancelOrder)
+userRoute.post('/returnOrder',userAuthController.returnOrder)
+userRoute.post('/createOrder',userAuthController.createOrder)
+userRoute.post('/verifyPayment',userAuthController.verifyPaymentWallet)
 
 
 //cart
@@ -93,11 +96,16 @@ userRoute.post('/cart/checkout',checkoutController.checkOutAddAddress)
 userRoute.post('/cart/createOrder',orderController.createOrder)
 userRoute.post('/cart/verifyPayment',orderController.verifyPayment)
 userRoute.get('/orderComplete',orderController.orderComplete)
+userRoute.post('/applyCoupon',checkoutController.applyCoupon)
 
 //wishlist
 userRoute.get('/wishlist',userAuthController.getWishlist)
 userRoute.post('/wishlist/add',userAuthController.addToWishlist)
 userRoute.post('/wishlist/remove',userAuthController.removeFromWishlist)
+userRoute.delete('/wishlist/remove/:productId',userAuthController.closeFromWishlist)
+
+//wallet
+userRoute.get('/profile/wallet',userAuthController.walletLoad)
 module.exports = userRoute
 
     

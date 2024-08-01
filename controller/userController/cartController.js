@@ -4,7 +4,6 @@ const Cart=require('../../models/cartModel')
 const Product=require('../../models/products')
 const User=require('../../models/userModel')
 const mongoose=require('mongoose')
-const { propfind } = require('../../routes/userRoutes')
 
 const loadCart=async(req,res)=>{
     try {

@@ -2,15 +2,14 @@
 
 <style>
     .small-select {
-        width: 150px; /* Adjust the width as needed */
+        width: 150px;
     }
     .payment-status-success {
-    color: green;
-}
-
-.payment-status-pending {
-    color: black;
-}
+        color: green;
+    }
+    .payment-status-pending {
+        color: black;
+    }
 </style>
 
 <div class="container mt-5">
@@ -20,74 +19,73 @@
         </div>
     </div>
     <% if(order) { %>
-    <% order.items.forEach(item => { %>
-        <div class="row my-4 p-4 border">
-            <div class="col-md-4">
-                <a href="/product/<%= item.productId._id %>">
-                    <div class="product-img" style="background-image: url(/static/user/images/<%= item.productId.images[0] %>); width: 100%; height: 200px; background-size: cover; background-position: center;"></div>
-                </a>
+        <% order.items.forEach(item => { %>
+            <div class="row my-4 p-4 border">
+                <div class="col-md-4">
+                    <a href="/product/<%= item.productId._id %>">
+                        <div class="product-img" style="background-image: url(/static/user/images/<%= item.productId.images[0] %>); width: 100%; height: 200px; background-size: cover; background-position: center;"></div>
+                    </a>
+                </div>
+                <div class="col-md-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <h3><%= item.productId.name %></h3>
+                        <p>Price: <span class="text-success">₹<%= item.productId.price %></span></p>
+                        <p>Quantity: <%= item.quantity %></p>
+                        <p>Subtotal: ₹<%= item.productId.price * item.quantity %></p>
+                        <p>Status: <%= item.itemStatus %></p>
+                    </div>
+                    <div>
+                        <p>Payment Method: <%= order.paymentMethod %></p>
+                        <p>Delivery Charge: <span class="text-danger">FREE <del class="text-muted">40</del></span></p>
+                        <p>Total Amount: ₹<%= order.totalPrice %></p>
+                    </div>
+                    <div>
+                        <select class="form-select form-select-sm small-select item-status-select" data-item-id="<%= item._id %>" aria-label="Order Status" <% if (item.itemStatus === 'cancelled') { %> disabled <% } %>>
+                            <option value="pending" <% if (item.itemStatus === 'pending') { %> selected <% } %>>Pending</option>
+                            <option value="shipped" <% if (item.itemStatus === 'shipped') { %> selected <% } %>>Shipped</option>
+                            <option value="delivered" <% if (item.itemStatus === 'delivered') { %> selected <% } %>>Delivered</option>
+                            <option value="cancelled" <% if (item.itemStatus === 'cancelled') { %> selected <% } %>>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Delivery Address</h3>
+                    <p><%= order.address.name %></p>
+                    <p><%= order.address.street %></p>
+                    <p><%= order.address.city %>, <%= order.address.state %> - <%= order.address.zip %></p>
+                    <p>Zipcode: <%= order.address.zipcode %></p>
+                    <p>Phone: <%= order.address.mobile %></p>
+                </div>
             </div>
-            <div class="col-md-4 d-flex flex-column justify-content-between">
-                <div>
-                    <h3><%= item.productId.name %></h3>
-                    <p>Price: <span class="text-success">₹<%= item.productId.price %></span></p>
-                    <p>Quantity: <%= item.quantity %></p>
-                    <p>Subtotal: ₹<%= item.productId.price * item.quantity %></p>
-                    <p>Status: <%= order.status %></p>
-                </div>
-                <div>
-                    <p>Payment Method: <%= order.paymentMethod %></p>
-                    <p>Delivery Charge: <span class="text-danger">FREE <del class="text-muted">40</del></span></p>
-                    <p>Total Amount: ₹<%= order.totalPrice %></p>
-                </div>
-                <div>
-                    <select class="form-select form-select-sm small-select" aria-label="Order Status" <% if (order.status === 'cancelled') { %> disabled <% } %>>
-                        <option value="pending" <% if (order.status === 'pending') { %> selected <% } %>>Pending</option>
-                        <option value="shipped" <% if (order.status === 'shipped') { %> selected <% } %>>Shipped</option>
-                        <option value="delivered" <% if (order.status === 'delivered') { %> selected <% } %>>Delivered</option>
-                        <option value="cancelled" <% if (order.status === 'cancelled') { %> selected <% } %>>Cancelled</option>
-                    </select>
-                </div>
-                <div>
-                   
-                </div>
-            </div>
-            <div class="col-md-4">
-                <h3>Delivery Address</h3>
-                <p><%= order.address.name %></p>
-                <p><%= order.address.street %></p>
-                <p><%= order.address.city %>, <%= order.address.state %> - <%= order.address.zip %></p>
-                <p>Zipcode: <%= order.address.zipcode %></p>
-                <p>Phone: <%= order.address.mobile %></p>
-            </div>
-        </div>
-    <% }) %>
+        <% }) %>
     <% } else { %>
         <p>No order details available.</p>
     <% } %>
 </div>
 
 <script>
-    document.querySelector('.form-select').addEventListener('change', function() {
-        const newStatus = this.value;
-        const orderId = '<%= order._id %>';
+    document.querySelectorAll('.item-status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const newStatus = this.value;
+            const orderId = '<%= order._id %>';
+            const itemId = this.getAttribute('data-item-id');
 
-        fetch(`/admin/orders/orderDetails/updateStatus`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                
-            },
-            body: JSON.stringify({ orderId, newStatus })
-        }).then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  alert('Order status updated successfully!');
-                  // Optionally refresh or redirect
-              } else {
-                  alert('Failed to update status.');
-              }
-          });
+            fetch(`/admin/orders/orderDetails/updateStatus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ orderId, newStatus, itemId })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('Order status updated successfully!');
+                      location.reload();
+                  } else {
+                      alert('Failed to update status.');
+                  }
+              });
+        });
     });
 </script>
 

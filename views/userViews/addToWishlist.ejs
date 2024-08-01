@@ -1,5 +1,55 @@
 <%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0/lib/noty.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0/lib/themes/mint.css">
 
+
+<style>
+    /* The snackbar - position it at the bottom and in the middle of the screen */
+#snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #F44336; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+</style>
 <div class="breadcrumbs">
     <div class="container">
         <div class="row">
@@ -22,50 +72,157 @@
                         <span>Price</span>
                     </div>
                     <div class="one-eight text-center">
-                        <span>Quantity</span>
+                        <span>Discount Price</span>
                     </div>
                     <div class="one-eight text-center">
-                        <span>Total</span>
+                        <span>Action</span>
                     </div>
                     <div class="one-eight text-center px-4">
                         <span>Remove</span>
                     </div>
                 </div>
+                <% if (products.length > 0) { %>
+                    <% products.forEach(product => { %>
+                        <div class="product-cart d-flex">
+                            <div class="one-forth">
+                                <a href="/shop/productDetails/<%= product._id %>">
+                                    <div class="product-img" style="background-image: url('/static/user/images/<%= product.images[0] %>');">
+                                    </div>
+                                </a>
+                                <div class="display-tc">
+                                    <h3><%= product.name %></h3>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="price">&#8377;<%= product.price %></span>
+                                </div>
+                            </div>
+                           
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <span class="price">&#8377;<%= product.discountPrice %></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    
+                                    <% if (isLogin) { %>
+                                        <% if (product.stock > 0) { %>
+                                            <br>
+                                            <p class="addtocart">
+                                                <a href="#" class="btn btn-primary btn-addtocart" data-product-id="<%= product._id %>">
+                                                    <i class="icon-shopping-cart"></i> Add to Cart
+                                                </a>
+                                            </p>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="one-eight text-center">
+                                <div class="display-tc">
+                                    <a href="#" class="closed" data-product-id="<%= product._id %>"></a>
+                                </div>
+                            </div>
 
-                <% products.forEach(product => { %>
-                <div class="product-cart d-flex">
-                    <div class="one-forth">
-                        <div class="product-img" style="background-image: url(<%= product.imageUrl %>);">
+                            
                         </div>
-                        <div class="display-tc">
-                            <h3><%= product.name %></h3>
-                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="no-products">
+                        
+                        <img  style="padding-left: 250px; width: 650px;" src="/static/user/images/Shopping Trolley stock vector_ Illustration of merchant - 28077411.jpeg" alt="">
+                        
                     </div>
-                    <div class="one-eight text-center">
-                        <div class="display-tc">
-                            <span class="price">$<%= product.price %></span>
-                        </div>
-                    </div>
-                    <div class="one-eight text-center">
-                        <div class="display-tc">
-                            <input type="text" id="quantity" name="quantity" class="form-control input-number text-center" value="1" min="1" max="100">
-                        </div>
-                    </div>
-                    <div class="one-eight text-center">
-                        <div class="display-tc">
-                            <span class="price">$<%= product.price %></span>
-                        </div>
-                    </div>
-                    <div class="one-eight text-center">
-                        <div class="display-tc">
-                            <a href="#" class="closed"></a>
-                        </div>
-                    </div>
-                </div>
-                <% }) %>
+                <% } %>
+                
             </div>
         </div>
     </div>
 </div>
+<div id="snackbar"></div>
+
+<script>
+    document.querySelectorAll('.closed').forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            const productId = this.getAttribute('data-product-id');
+            fetch(`/wishlist/remove/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.closest('.product-cart').remove();
+                    showsnackbar('removed product from wishlist')
+                    setTimeout(()=>{
+                        location.reload()
+                    },1000)
+                    if (document.querySelectorAll('.product-cart').length === 0) {
+                       
+                    }
+                } else {
+                    showsnackbar('Error removing product from wishlist');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+
+       
+        document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.btn-addtocart').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault(); // Prevent default anchor behavior
+                
+                try {
+                    const productId = button.getAttribute('data-product-id'); // Use the button variable
+
+                    const response = await fetch('/addToCart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            productId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to add product to cart');
+                    }
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        showsnackbar('Already In Cart');
+                    } else {
+                        showsnackbar('Added To Cart');
+                    }
+
+                } catch (error) {
+                    showsnackbar(error.message); // Changed to showsnackbar for consistency
+                }
+            });
+        });
+    });
+
+    
+    function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+x.innerHTML= text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+</script>
+
 
 <%- include('../layout/userlayout/footer') -%>

@@ -10,13 +10,18 @@ const loadShop = async (req, res) => {
     try {
         const userId = req.session.userId;
         console.log(userId)
-        let wishlistProduct = await User.findById(userId);
+        wishlistProduct = []
+        
         console.log(wishlistProduct,'vhvhvhvhvhvhihg')
         wishlistProduct = wishlistProduct.wishlist;
         const category = req.query.category || '';
         let user = null
-        if (user) {
+        if(userId){
             user = await User.findById(userId)
+        }
+        if (user) {
+          
+            wishlistProduct = user.wishlist
         }
         const minPrice = req.query.minPrice || '';
         const maxPrice = req.query.maxPrice || '';

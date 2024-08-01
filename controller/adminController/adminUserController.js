@@ -3,8 +3,14 @@ const Users=require('../../models/userModel')
 
 const loadUser=async(req,res)=>{
     try {
-        const usersList= await Users.find()
-        res.render('users',{users:usersList})
+        const page = parseInt(req.query.page) || 1
+        const limit = 5
+        const skip = (page -1 )*limit
+        const totalUsers = await Users.countDocuments()
+        const usersList = await Users.find().skip(skip).limit(limit)
+        const totalPages = Math.ceil(totalUsers/limit)
+        // const usersList= await Users.find()
+        res.render('users',{users:usersList,currentPage: page,totalPages: totalPages})
         
     } catch (error) {
         console.log(error.message)

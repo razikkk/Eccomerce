@@ -38,13 +38,23 @@ const orderSchema=new Schema({
                 required:true,
                 default:"ordered"
             },
+            itemPrice:{
+                type:Number,
+                required:true
+            },
+
             quantity:{
                 type:Number,
                 required:true
             },
-            
-            reason:{
-                type:String
+            returnStatus: {
+                type: String,
+                enum: ['none', 'requested', 'approved', 'rejected', 'returned'],
+                default: 'none'
+            },
+            returnReason: {
+                type: String,
+                default: ''
             },
             isApproved:{
                 type:Boolean

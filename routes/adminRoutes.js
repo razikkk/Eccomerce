@@ -5,11 +5,13 @@ const auth=require('../middleware/adminAuth')
 const adminUserController=require('../controller/adminController/adminUserController')
 const productController=require('../controller/adminController/productController')
 const orderController=require('../controller/adminController/adminOrderController')
+const couponController=require('../controller/adminController/couponController')
 const config=require('../config/config')
 const session=require('express-session')
 const multer = require('multer');
 const path = require('path');
 const { cannotHaveAUsernamePasswordPort } = require('whatwg-url')
+const offerController = require('../controller/adminController/offerController')
 
 // Configure multer storage
 const storage = multer.diskStorage({
@@ -41,12 +43,12 @@ adminRoute.set('views','./views/adminViews')
 adminRoute.get('/login',auth.isLogout,  adminAuthController.loadAdminLogin)
 adminRoute.post('/login',adminAuthController.verifyLogin)
 adminRoute.get('/dashboard',auth.isLogin,adminAuthController.dashboardLoad)
-adminRoute.get('/logout',adminAuthController.logout)
+adminRoute.get('/logout',auth.isLogout,adminAuthController.logout)
 
 //user managment
 adminRoute.get('/users',auth.isLogin,adminUserController.loadUser)
 adminRoute.put('/blockUser',auth.isLogin,adminUserController.block)
-adminRoute.put('/unblockUser',auth.isLogin,adminUserController.unblock)
+adminRoute.put('/unblockUser',adminUserController.unblock)
 
 //category managment
 adminRoute.get('/category',auth.isLogin,adminAuthController.categoryLoad)
@@ -73,4 +75,19 @@ adminRoute.post('/product/editProduct',auth.isLogin,upload.any(),productControll
 adminRoute.get('/orders',orderController.orderLoad)
 adminRoute.get('/orders/orderDetails/:orderId',orderController.OrderDetailsLoad)
 adminRoute.post('/orders/orderDetails/updateStatus',orderController.updateOrderStatus)
+
+//coupon
+adminRoute.get('/coupon',couponController.couponLoad)
+adminRoute.post('/coupon/add',couponController.addCoupon)
+adminRoute.delete('/coupon/:id',couponController.deleteCoupon)
+adminRoute.put('/coupon/:id',couponController.editCoupon)
+
+//sales report
+adminRoute.get('/salesReport',adminAuthController.salesReportLoad)
+adminRoute.get('/filterSalesInterval',adminAuthController.filterSalesInterval)
+adminRoute.get('/filterSalesReport',adminAuthController.filterSalesReport)
+
+//offer
+adminRoute.get('/categoryOffer',offerController.categoryOfferLoad)
+adminRoute.post('/categoryOffer/addOffer',offerController.addCategoryOffer)
 module.exports=adminRoute

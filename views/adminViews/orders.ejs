@@ -22,17 +22,16 @@
                         <% const itemsPerPage = 5; %> 
                         <% const startIndex = (currentPage - 1) * itemsPerPage; %> 
 
-                        <% orders.forEach((order,index) => { %>
+                        <% orders.forEach((order, index) => { %>
                             <tr>
-                                <td><%= startIndex + index +1%></td>
+                                <td><%= startIndex + index + 1 %></td>
                                 <td><%= order.orderId %></td>
-                                <td><%= order.userId.name %></td> 
+                                <td><%= order.userId ? order.userId.name : 'Unknown User' %></td> 
                                 <td><%= order.date.toLocaleDateString() %></td>
                                 <td>₹<%= order.totalPrice %></td>
                                 <td><%= order.paymentMethod %></td>
                                 <td>
-                                    <a href="/admin/orders/orderDetails/<%= order._id%>" class="badge badge-success" style="border-radius: 5px;">View</a>
-                                    
+                                    <a href="/admin/orders/orderDetails/<%= order._id %>" class="badge badge-success" style="border-radius: 5px;">View</a>
                                 </td>
                             </tr>
                         <% }) %>
@@ -41,33 +40,45 @@
             </div>
 
             <!-- Pagination Controls -->
-            <div class="pagination-container">
-                <nav aria-label="Page navigation">
+              <!-- Pagination Controls -->
+              <div class="row mt-3">
+                <div class="col-md-12 text-center">
                     <ul class="pagination">
                         <% if (currentPage > 1) { %>
                             <li class="page-item">
-                                <a class="page-link" href="/admin/orders?page=<%= currentPage - 1 %>" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
+                                <a class="page-link" href="/admin/orders?page=<%= currentPage - 1 %>">&laquo; Previous</a>
                             </li>
                         <% } %>
 
-                        <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (currentPage > 2) { %>
+                            <li class="page-item">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+
+                        <% for (let i = Math.max(1, currentPage - 1); i <= Math.min(totalPages, currentPage + 1); i++) { %>
                             <li class="page-item <%= i === currentPage ? 'active' : '' %>">
                                 <a class="page-link" href="/admin/orders?page=<%= i %>"><%= i %></a>
                             </li>
                         <% } %>
 
+                        <% if (currentPage < totalPages - 1) { %>
+                            <li class="page-item">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+
                         <% if (currentPage < totalPages) { %>
                             <li class="page-item">
-                                <a class="page-link" href="/admin/orders?page=<%= currentPage + 1 %>" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
+                                <a class="page-link" href="/admin/orders?page=<%= currentPage + 1 %>">Next &raquo;</a>
                             </li>
                         <% } %>
                     </ul>
-                </nav>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
 </div>
@@ -79,7 +90,7 @@
     }
 
     .pagination {
-        background-color: #000; /* Black background */
+        
         border-radius: 0; /* Remove border radius if needed */
     }
 
@@ -89,7 +100,6 @@
 
     .pagination .page-link {
         color: #fff; /* White text color */
-        background-color: #000; /* Black background */
         border: 1px solid #fff; /* White border */
     }
 
@@ -102,5 +112,4 @@
         background-color: #333; /* Dark grey background on hover */
     }
 </style>
-
-
+<%- include('../layout/adminlayout/footer') -%>

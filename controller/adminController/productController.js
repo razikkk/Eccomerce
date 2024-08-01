@@ -10,30 +10,40 @@ const fs=require('fs')
 
 
 
-
-const productsLoad=async(req,res)=>{
+const productsLoad = async (req, res) => {
     try {
-        let ProductData=await Product.aggregate([
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5;
+        const skip = (page - 1) * limit;
+
+        const ProductData = await Product.aggregate([
+            { $match: { isListed: false } },
             {
-              $match:{
-                    isListed:false
+                $lookup: {
+                    from: "categories",
+                    localField: "categoryId",
+                    foreignField: "_id",
+                    as: "category"
                 }
             },
-            {
-                $lookup:{
-                    from:"categories",
-                    localField:"categoryId",
-                    foreignField:"_id",
-                    as:"category"
-                }
-            },
-            {$unwind:"$category"}
-        ])
-        res.render('products',{product:ProductData})
+            { $unwind: "$category" },
+            { $skip: skip },
+            { $limit: limit }
+        ]);
+
+        const totalProducts = await Product.countDocuments({ isListed: false });
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        res.render('products', {
+            product: ProductData,
+            currentPage: page,
+            totalPages
+        });
     } catch (error) {
-        console.log(error.message)
+        console.log(error.message);
     }
-}
+};
+
 const loadAddproduct=async(req,res)=>{
     try {
      const category=   await Category.find({is_delete:false})
@@ -68,13 +78,14 @@ const checkAlready=async(req,res)=>{
 
 const addProduct = async (req, res) => {
     try {
-        const { name, category, quantity, price, discountprice, description } = req.body;
-        const images = req.files.map(file => file.filename); // Extract filenames from uploaded files
+        const { name, category, quantity, price, description } = req.body;
+        const images = req.files.map(file => file.filename);
 
         if (!name || !category || !quantity || !price || !description) {
             return res.status(400).json({ success: false, message: 'All required fields must be filled' });
         }
 
+        const discountprice = Math.floor(price - (price * 0.05));
         // Create new product (adjust as per your Product model)
         const newProduct = new Product({
             name:name,

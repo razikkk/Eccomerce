@@ -1,0 +1,312 @@
+<%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+
+    .wallet-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
+
+    .wallet-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .wallet-header h1 {
+        color: black;
+    }
+
+    .wallet-card {
+        position: relative;
+        background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 51%, #7db9e8 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        text-align: left;
+        width: 500px;
+        height: 300px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .wallet-balance {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .wallet-actions button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #27ae60;
+        color: white;
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .user-name {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        font-size: 18px;
+    }
+
+    .transaction-history {
+        margin-top: 40px;
+    }
+
+    .transaction-history h2 {
+        color: black;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 5px;
+    }
+
+    .transaction-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .transaction-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-item span {
+        color: #333;
+    }
+
+    .transaction-item .credit {
+        color: #27ae60;
+    }
+
+    .transaction-item .debit {
+        color: #c0392b;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        animation: fadeIn 0.3s; /* Fade-in animation */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* Centered vertically and horizontally */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+        max-width: 500px; /* Optional: Set a max-width for larger screens */
+        border-radius: 10px;
+        animation: slideIn 0.3s; /* Slide-in animation */
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    #addMoneyForm {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #addMoneyForm label,
+    #addMoneyForm input,
+    #addMoneyForm button {
+        margin-bottom: 10px;
+    }
+
+    /* Animation keyframes */
+    @keyframes slideIn {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            background-color: rgba(0, 0, 0, 0);
+        }
+        to {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+    }
+</style>
+
+<div class="wallet-container">
+    <div class="wallet-header">
+        <h1>My Wallet</h1>
+    </div>
+    <% wallet.forEach(function(wallets){ %>
+    <div class="wallet-card">
+        <div class="wallet-balance">
+            Balance: &#x20b9; <%= wallets.balance %>
+        </div>
+        <div class="user-name">
+            <%= wallets.userName %>
+        </div>
+        <button class="wallet-actions" id="openModal">Add Money</button>
+    </div>
+    <% }) %>
+    <div class="transaction-history">
+        <h2>Transaction History</h2>
+        <ul class="transaction-list">
+            <% wallet.forEach(function(wallets) { %>
+                <% wallets.transactions.forEach(function(transaction){ %>
+            <li class="transaction-item">
+                <span><%= transaction.description %></span>
+                <span><%= transaction.date.toLocaleDateString() %></span>
+                <span class="<%= transaction.type === 'credit' ? 'credit' : 'debit' %>">
+                    ₹ <%= transaction.amount %>
+                </span>
+            </li>
+            <% }) %>
+            <% }) %>
+        </ul>
+    </div>
+</div>
+
+<!-- Modal HTML -->
+<div id="addMoneyModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add Money</h2>
+        <form id="addMoneyForm">
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" name="amount"  required>
+            <button type="submit">Add</button>
+        </form>
+    </div>
+</div>
+
+<%- include('../layout/userlayout/footer') -%>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById("addMoneyModal");
+        var btn = document.getElementById("openModal");
+        var span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById("addMoneyForm").onsubmit = function(event) {
+            event.preventDefault();
+            var amount = document.getElementById("amount").value;
+
+            // Create a Razorpay order
+            fetch('/createOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: amount * 100 }) // Amount in paise
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.orderId) {
+                    var options = {
+                        "key": "<%= razorpayKey %>", // Replace with your Razorpay key
+                        "amount": amount * 100, // Amount in paise
+                        "currency": "INR",
+                        "name": "Your Company Name",
+                        "description": "Add money to wallet",
+                        "order_id": data.orderId, // Set the order ID from server response
+                        "handler": function (response) {
+                            // Send payment details to server for verification
+                            fetch('/verifyPayment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    amount: amount
+                                })
+                            }).then(response => response.json())
+                              .then(data => {
+                                  if (data.success) {
+                                      alert("Payment successful!");
+                                      modal.style.display = "none";
+                                  } else {
+                                      alert("Payment failed: " + data.message);
+                                  }
+                              });
+                        },
+                        "prefill": {
+                            "name": "",
+                            "email": "",
+                            "contact": ""
+                        },
+                        "theme": {
+                            "color": "#3399cc"
+                        }
+                    };
+
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                } else {
+                    alert("Failed to create order");
+                }
+            });
+        }
+    });
+</script>

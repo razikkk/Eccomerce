@@ -93,6 +93,54 @@
     flex-shrink: 0;
     min-width: 80px; /* Adjust this value to align the prices correctly */
 }
+/* Ensure that the row uses flexbox */
+.form-group.d-flex {
+    display: flex;
+    align-items: center;
+}
+
+/* Adjust margins for better alignment */
+.form-group .col-sm-6 {
+    margin-bottom: 0;
+    padding-right: 0;
+}
+
+.form-group .col-sm-3 {
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 10px; /* Adjust this value to control spacing between input and button */
+}
+.coupon-container {
+    margin-bottom: 10px;
+}
+
+.coupon-box {
+    margin-top: 5px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    width: 250px; /* Set a fixed width to make it smaller */
+}
+
+.copy-icon {
+    width: 15px; /* Make the icon smaller */
+    margin-left: 5px;
+    vertical-align: middle; /* Align the icon vertically in the middle */
+    cursor: pointer;
+}
+
+.coupon-box p {
+    margin: 3px 0; /* Reduce the margin between paragraphs */
+    font-size: 0.9em; /* Make the text slightly smaller */
+}
+
+
+
+
+
 </style>
 
 <div class="breadcrumbs">
@@ -147,10 +195,39 @@
                         </li>
                     <% }) %>
                 </ul>
+              
                 <% if (address.length > 1) { %>
                 <div class="toggle-button">Show more addresses</div>
                 <% } %>
+                <form action="#">
+                    <div class="row form-group d-flex align-items-center">
+                        <div class="col-sm-6">
+                            <input type="text" name="quantity" id="couponCodeInput" class="form-control input-number" placeholder="Your Coupon Number...">
+                        </div>
+                        <div class="col-sm-3">
+                            <button type="button" id="applyCouponButton" class="btn btn-info">Apply Coupon</button>                         
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-warning view-coupon-button">View Coupons</button>
+                    <div class="coupon-container" style="display: none;">
+                        <% coupons.forEach(function(coupon, index) { %>
+                            <div class="coupon-box shadow-box">
+                                <p >
+                                    <strong>Coupon Code:</strong>
+                                    <span ><%= coupon.couponCode %></span>
+                                    <img src="/static/user/images/copy.png" alt="Copy" style="width: 10px; cursor: pointer; margin-left: 20px;" onclick="copyCouponCode('<%= coupon.couponCode %>')">
+                                </p>
+                                <p class="text-success"><strong>Discount:</strong> <%= coupon.percentage %>%</p>
+                                <p class="text-danger"><strong>Expires:</strong> <%= coupon.expiryDate.toLocaleDateString() %></p>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    
+                </form>
+                
             </div>
+            
 
             <div class="col-lg-4">
                 <div class="row">
@@ -174,7 +251,7 @@
                         </div>
                     </div>
 
-                   
+                  
                     <!--  -->
                     <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
                         <div class="modal-dialog">
@@ -225,7 +302,9 @@
                         </div>
                     </div>
                     <!--  -->
-
+                   
+                      
+                    
                     <div class="w-100"></div>
 
                     <div class="col-md-12">
@@ -269,11 +348,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.x.x/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+
+          
+document.querySelector('.view-coupon-button').addEventListener('click', function() {
+        const couponContainer = document.querySelector('.coupon-container');
+        if (couponContainer.style.display === 'none' || couponContainer.style.display === '') {
+            couponContainer.style.display = 'block';
+        } else {
+            couponContainer.style.display = 'none';
+        }
+    });
+
+    function copyCouponCode(couponCode) {
+        navigator.clipboard.writeText(couponCode).then(function() {
+            showsnackbar('Coupon code copied to clipboard');
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
     document.addEventListener('DOMContentLoaded', function() {
         const toggleButton = document.querySelector('.toggle-button');
         const addressBoxes = document.querySelectorAll('.address-box');
         let displayState = sessionStorage.getItem('displayState') || 'first';
-
+      
         function updateDisplay(state) {
             if (state === 'first') {
                 addressBoxes.forEach((box, index) => {
@@ -287,7 +384,9 @@
                 toggleButton.textContent = 'Show fewer addresses';
             }
         }
-
+         
+        
+   
         updateDisplay(displayState);
 
         toggleButton.addEventListener('click', function() {
@@ -380,13 +479,12 @@
                 $('#addAddressModal').modal('hide')
                 
                 setTimeout(() => {
-            window.location.reload(); // Reload the page after a short delay
+            window.location.reload(); 
         }, 1000); 
 
-                // Update DOM to display the new address
+                
                 const addressesContainer = document.getElementById('addressesContainer');
-                // addressesContainer.innerHTML = '';
-                // console.log(data)
+                
               
             } else {
                 showsnackbar('Failed to add address. Please try again.');
@@ -445,21 +543,21 @@
 });
 
 async function placeOrder() {
-    // Check if an address is selected
+    
     const selectedAddress = document.querySelector('input[name="address"]:checked');
     if (!selectedAddress) {
         Swal.fire('Error', 'Please select an address', 'error');
         return;
     }
 
-    // Check if a payment method is selected
+   
     const selectedPaymentMethod = document.querySelector('input[name="optradio"]:checked');
     if (!selectedPaymentMethod) {
         Swal.fire('Error', 'Please select a payment method', 'error');
         return;
     }
 
-    // Get the total price from the DOM
+    
     const totalPrice = parseFloat(document.getElementById('checkoutTotal').textContent.replace('₹', ''));
 
     // Confirm order placement
@@ -493,7 +591,7 @@ async function placeOrder() {
             const data = await response.json()
 
                 if (response.ok) {
-                    console.log('Server response:', data); // Log the full response
+                    console.log('Server response:', data); 
 
                     if (data.success && data.paymentStatus == 'COD') {
                         Swal.fire('Success', 'Order placed successfully!', 'success').then(() => {
@@ -567,7 +665,7 @@ const verifyPayment = async (payment, order) => {
             success: (response) => {
                 console.log("payment successfull")
                 if (response.paymentStatus == 'ONLINE-PAYMENT-SUCCESS') {
-                    location.href = '/success'
+                    location.href = '/orderComplete'
                 }
             }
         })
@@ -576,6 +674,56 @@ const verifyPayment = async (payment, order) => {
         console.log(error)
     }
 }
+
+document.getElementById("applyCouponButton").addEventListener("click", function() {
+    console.log('Button clicked');
+
+    var couponCode = document.getElementById("couponCodeInput").value;
+    console.log(couponCode, 'Coupon Code');
+
+    var subTotal = parseFloat(document.getElementById("checkoutSubTotal").innerText.replace('₹', ''));
+    console.log(subTotal, 'SubTotal');
+
+    if (!couponCode) {
+        showSnackbar("Please enter a coupon code");
+        return;
+    }
+
+    fetch('/applyCoupon', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ couponCode: couponCode, subTotal: subTotal })
+        
+    })
+    .then(response => {
+        console.log('Response status:', response.status); // Check the status
+        return response.json(); // Parse JSON from response
+    })
+    .then(data => {
+        console.log('Response data:', data); // Log the response data
+
+        if (data.success) {
+            var discount = (data.percentage / 100) * subTotal;
+            var total = subTotal - discount;
+
+            document.getElementById("checkoutDiscount").innerText = '₹' + discount.toFixed(2);
+            document.getElementById("checkoutTotal").innerText = '₹' + total.toFixed(2);
+             document.getElementById("couponCodeInput").value=""
+
+
+            showSnackbar("Coupon applied successfully");
+        } else {
+            showSnackbar(data.message || "Invalid coupon code");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        showSnackbar("An error occurred. Please try again.");
+    });
+});
+
 </script>
 
 <%- include('../layout/userlayout/footer') -%>

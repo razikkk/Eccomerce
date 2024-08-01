@@ -153,17 +153,7 @@
                     <div class="total-wrap">
                         <div class="row">
                             <div class="col-sm-8">
-                                <form action="#">
-                                    <div class="row form-group">
-                                        <div class="col-sm-9">
-                                            <input type="text" name="quantity" class="form-control input-number"
-                                                placeholder="Your Coupon Number...">
-                                        </div>
-                                        <div class="col-sm-3">
-                                            <input type="submit" value="Apply Coupon" class="btn btn-dark">
-                                        </div>
-                                    </div>
-                                </form>
+                                
                             </div>
                             <div class="col-sm-4 text-center">
                                 <div class="total">
@@ -258,12 +248,12 @@
             priceElement.textContent = `₹${newTotalPrice.toFixed(2)}`;
             console.log('Cart updated successfully:', data);
 
-            // Fetch updated delivery charge and update UI
-            updateDeliveryCharge(); // Call a function to update the delivery charge
-            updateCartPrices(); // Implement this function to update other parts of the UI as needed
+            
+            updateDeliveryCharge(); 
+            updateCartPrices(); 
         } catch (error) {
             console.error('Error updating cart:', error);
-            // Handle error scenarios, such as displaying an error message to the user
+            
         }
     };
 
@@ -295,22 +285,22 @@
             }
             const data = await response.json();
             const deliveryCharge = data.deliveryCharge;
-            // Update delivery charge in UI
+            
             document.getElementById('deliveryCharge').textContent = `₹${deliveryCharge.toFixed(2)}`;
         } catch (error) {
             console.error('Error fetching delivery charge:', error);
-            // Handle error scenarios, such as displaying an error message to the user
+            
         }
     };
 
-    // Add event listeners to quantity increase buttons
+    //increase
     document.querySelectorAll('.qty-up').forEach(button => {
         button.addEventListener('click', async () => {
             await handleQuantityChange(button, 1);
         });
     });
 
-    // Add event listeners to quantity decrease buttons
+    //  decrease buttons
     document.querySelectorAll('.qty-down').forEach(button => {
         button.addEventListener('click', async () => {
             await handleQuantityChange(button, -1);

@@ -56,12 +56,7 @@
                             required>
                         <small id="priceError" class="text-danger"></small>
                     </div>
-                    <div class="form-group">
-                        <label for="discountprice">Discount Price</label>
-                        <input type="text" class="form-control" id="discountprice" name="discountPrice"
-                            value="<%= product.discountPrice %>" required>
-                        <small id="discountPriceError" class="text-danger"></small>
-                    </div>
+                   
                     <div class="form-group">
                         <label for="description">Description</label>
                         <input type="text" class="form-control" name="productDescription" id="description"
@@ -89,7 +84,6 @@
     const productName = document.getElementById('productName').value.trim();
     const categoryName = document.getElementById('categoryName').value;
     const price = parseFloat(document.getElementById('price').value.trim());
-    const discountPrice = parseFloat(document.getElementById('discountprice').value.trim());
     const quantity = parseInt(document.getElementById('quantity').value.trim(), 10);
     const description = document.getElementById('description').value.trim();
     const images = document.getElementById('uploadImage').files;
@@ -98,7 +92,6 @@
     document.getElementById('productNameError').textContent = '';
     document.getElementById('categoryError').textContent = '';
     document.getElementById('priceError').textContent = '';
-    document.getElementById('discountPriceError').textContent = '';
     document.getElementById('quantityError').textContent = '';
     document.getElementById('productDescriptionError').textContent = '';
 
@@ -118,11 +111,6 @@
 
     if (isNaN(price) || price <= 0) {
         document.getElementById('priceError').textContent = 'Valid price is required';
-        isValid = false;
-    }
-
-    if (isNaN(discountPrice) || discountPrice <= 0 || discountPrice >= price) {
-        document.getElementById('discountPriceError').textContent = 'Valid discount price is required and should be less than the price';
         isValid = false;
     }
 
@@ -150,7 +138,6 @@
         formData.append('productName', productName);
         formData.append('categoryName', categoryName);
         formData.append('price', price);
-        formData.append('discountPrice', discountPrice);
         formData.append('quantity', quantity);
         formData.append('productDescription', description);
         formData.append('deletedImages', deletedIndices);
