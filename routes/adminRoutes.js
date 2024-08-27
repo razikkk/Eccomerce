@@ -43,7 +43,8 @@ adminRoute.set('views','./views/adminViews')
 adminRoute.get('/login',auth.isLogout,  adminAuthController.loadAdminLogin)
 adminRoute.post('/login',adminAuthController.verifyLogin)
 adminRoute.get('/dashboard',auth.isLogin,adminAuthController.dashboardLoad)
-adminRoute.get('/logout',auth.isLogout,adminAuthController.logout)
+adminRoute.get('/dashboard/getOrderStatus',adminAuthController.getOrderStats)
+adminRoute.get('/logout',adminAuthController.logout)
 
 //user managment
 adminRoute.get('/users',auth.isLogin,adminUserController.loadUser)
@@ -76,18 +77,26 @@ adminRoute.get('/orders',orderController.orderLoad)
 adminRoute.get('/orders/orderDetails/:orderId',orderController.OrderDetailsLoad)
 adminRoute.post('/orders/orderDetails/updateStatus',orderController.updateOrderStatus)
 
+
 //coupon
-adminRoute.get('/coupon',couponController.couponLoad)
-adminRoute.post('/coupon/add',couponController.addCoupon)
+adminRoute.get('/coupon',auth.isLogin,couponController.couponLoad)
+adminRoute.post('/coupon/add',auth.isLogin,couponController.addCoupon)
 adminRoute.delete('/coupon/:id',couponController.deleteCoupon)
-adminRoute.put('/coupon/:id',couponController.editCoupon)
+adminRoute.put('/coupon/edit/:id',couponController.editCoupon)
+
 
 //sales report
-adminRoute.get('/salesReport',adminAuthController.salesReportLoad)
-adminRoute.get('/filterSalesInterval',adminAuthController.filterSalesInterval)
-adminRoute.get('/filterSalesReport',adminAuthController.filterSalesReport)
+adminRoute.get('/salesReport',auth.isLogin,adminAuthController.salesReportLoad)
+adminRoute.get('/filterSalesInterval',auth.isLogin,adminAuthController.filterSalesInterval)
+adminRoute.get('/filterSalesReport',auth.isLogin,adminAuthController.filterSalesReport)
 
 //offer
-adminRoute.get('/categoryOffer',offerController.categoryOfferLoad)
+adminRoute.get('/categoryOffer',auth.isLogin,offerController.categoryOfferLoad)
 adminRoute.post('/categoryOffer/addOffer',offerController.addCategoryOffer)
+adminRoute.post('/categoryOffer/editOffer',offerController.editCategoryOffer)
+adminRoute.delete('/categoryOffer/delete',offerController.deleteCategoryOffer)
+adminRoute.get('/productOffer',auth.isLogin,offerController.productOfferLoad)
+adminRoute.post('/productOffer/add',offerController.addProductOffer)
+adminRoute.post('/productOffer/edit',offerController.editProductOffer)
+adminRoute.delete('/productOffer/delete',offerController.deleteProductOffer)
 module.exports=adminRoute

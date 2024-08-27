@@ -9,10 +9,8 @@ const userModel = require('../../models/userModel');
 const loadShop = async (req, res) => {
     try {
         const userId = req.session.userId;
-        console.log(userId)
         wishlistProduct = []
         
-        console.log(wishlistProduct,'vhvhvhvhvhvhihg')
         wishlistProduct = wishlistProduct.wishlist;
         const category = req.query.category || '';
         let user = null
@@ -50,7 +48,6 @@ const loadShop = async (req, res) => {
             name: { $regex: new RegExp(searchQuery, 'i') }
         } : {};
         const combinedFilter = { ...filter, ...searchFilter };
-        console.log(combinedFilter, 'ith');
         const totalProducts = await Product.countDocuments(combinedFilter);
         const products = await Product.aggregate([
             { $match: combinedFilter },
@@ -64,9 +61,7 @@ const loadShop = async (req, res) => {
             { $skip: (page - 1) * limit },
             { $limit: limit }
         ]).collation({ locale: "en", strength: 2 });
-        console.log(totalProducts);
-        console.log(combinedFilter);
-        console.log(products);
+       
         const categories = await Category.find({ is_delete: false });
 
 
@@ -89,7 +84,7 @@ const loadShop = async (req, res) => {
         });
     } catch (error) {
         console.log(error)
-        res.status(500).send('Internal Server Error');
+        res.render('500')
     }
 };
 
@@ -163,8 +158,6 @@ function getSortCriteria(sortOption) {
             return { popularity: -1 };
     }
 };
-
-
 
 
 const loadProductDetails = async (req, res) => {
@@ -174,6 +167,7 @@ const loadProductDetails = async (req, res) => {
         res.render('productDetails', { isLogin: req.session.userId ? true : false, productDetail })
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
 }
 
@@ -183,7 +177,6 @@ const loadProductDetails = async (req, res) => {
 
 module.exports = {
     loadShop,
-
     loadProductDetails
 
 }

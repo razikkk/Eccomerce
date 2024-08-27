@@ -13,6 +13,7 @@ const checkoutController=require('../controller/userController/checkoutControlle
 const orderController=require('../controller/userController/orderController')
 
 
+
 userRoute.use(session({
     secret:config.sessionSecret,
     saveUninitialized:false,
@@ -77,14 +78,15 @@ userRoute.post('/profile/editProfile',userAuthController.editProfile)
 userRoute.post('/profile/changePassword',userAuthController.changePassword)
 userRoute.get('/profile/showOrder',userAuthController.showOrderLoad)
 userRoute.get('/profile/showOrder/showOrderDetails/:orderId',userAuthController.showOrderDetails)
+userRoute.get('/invoice/:orderId/:itemId',orderController.generateInvoice)
 userRoute.post('/profile/showOrder/showOrderDetails/cancel/:orderId/:itemId',userAuthController.cancelOrder)
-userRoute.post('/returnOrder',userAuthController.returnOrder)
+userRoute.post('/returnOrder',userAuthController.returnOrderRequest)
 userRoute.post('/createOrder',userAuthController.createOrder)
 userRoute.post('/verifyPayment',userAuthController.verifyPaymentWallet)
 
 
 //cart
-userRoute.get('/cart',auth.isLogin,cartController.loadCart)
+userRoute.get('/cart',cartController.loadCart)
 userRoute.post('/addToCart',cartController.addToCart);
 userRoute.post('/update_cart',cartController.updateCart)
 userRoute.delete('/removeProduct/:productId',cartController.deleteFromCart)
@@ -97,6 +99,7 @@ userRoute.post('/cart/createOrder',orderController.createOrder)
 userRoute.post('/cart/verifyPayment',orderController.verifyPayment)
 userRoute.get('/orderComplete',orderController.orderComplete)
 userRoute.post('/applyCoupon',checkoutController.applyCoupon)
+userRoute.post('/removeCoupon',checkoutController.removeCoupon)
 
 //wishlist
 userRoute.get('/wishlist',userAuthController.getWishlist)
@@ -106,6 +109,13 @@ userRoute.delete('/wishlist/remove/:productId',userAuthController.closeFromWishl
 
 //wallet
 userRoute.get('/profile/wallet',userAuthController.walletLoad)
+userRoute.post('/repay',orderController.repay)
+
+
+userRoute.use((err,req,res,next)=>{
+  console.log('error',err)
+  res.status(500).render('500',{error:err.message})
+})
 module.exports = userRoute
 
     

@@ -8,19 +8,21 @@ const mongoose=require('mongoose')
 const loadCart=async(req,res)=>{
     try {
         const userId=req.session.userId
+        if(!userId){
+            res.redirect('/login')
+        }
         const cartDatas = await Cart.findOne({ userId:userId }).populate("products.productId");
-        console.log(cartDatas)
         res.render('cart',{isLogin: req.session.userId ? true : false,cartDatas:cartDatas})
         
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
 }
 
 const addToCart=async(req,res)=>{
     try {
         const {productId,quantity}=req.body;
-        console.log(req.session.userId)
     
       
         const alreadyInCart = await Cart.findOne({ userId: req.session.userId });
@@ -58,8 +60,7 @@ const addToCart=async(req,res)=>{
         
     } catch (error) {
         console.log(error.message)
-        res.status(500).json({error:'An Error Occured'})
-    }
+        res.render('500')    }
 }
 
 const updateCart = async (req, res) => {
@@ -80,11 +81,8 @@ const updateCart = async (req, res) => {
         let totalQuantity = 0;
 
         for (const productId in quantities) {
-            console.log(productId);
             const quantity = quantities[productId];
-            console.log(quantity);
             const product = cart.products.find(p => p._id.toString() === productId);
-            console.log(product);
             if (product) {
                 product.quantity = quantity;
                 newTotalPrice += product.productId.discountPrice * product.quantity;
@@ -100,8 +98,7 @@ const updateCart = async (req, res) => {
         res.json({ success: true, totalPrice: cart.totalPrice, totalQuantity: cart.totalQuantity });
     } catch (error) {
         console.error('Error updating cart:', error);
-        res.status(500).json({ error: 'An error occurred while updating the cart' });
-    }
+        res.render('500')    }
 };
 
 
@@ -128,7 +125,7 @@ const deleteFromCart = async (req, res) => {
         res.json({ success: true, message: 'Product has been removed' });
     } catch (error) {
         console.log('Error removing product from cart:', error.message);
-        res.status(500).json({ error: 'An error occurred while removing the product from the cart' });
+        res.render('500')
     }
 };
 

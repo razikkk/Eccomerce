@@ -4,6 +4,7 @@ const Category=require('../../models/category')
 const Order=require('../../models/orderModel')
 const Cart=require('../../models/cartModel')
 const Address=require('../../models/addressModel')
+const Wallet = require('../../models/walletModel')
 const mongoose=require('mongoose')
 const products = require('../../models/products')
 const ObjectId=mongoose.Types.ObjectId
@@ -11,6 +12,9 @@ const Razorpay = require('razorpay')
 const { onlinePayment, verifyOnlinePayment } = require('../../services/onlinePayment')
 const dotenv = require('dotenv')
 const { verify } = require('crypto')
+const pdfDocument = require('pdfkit')
+const category = require('../../models/category')
+const { totalmem } = require('os')
 require('dotenv').config();
 
 const createOrder = async (req, res) => {
@@ -44,7 +48,7 @@ const createOrder = async (req, res) => {
             items: []
         });
 
-        if (orderData.paymentMethod === "cod" && req.body.totalPrice > 10000) {
+        if (orderData.paymentMethod === "cod" && req.body.totalPrice > 1000) {
             return res.json({ success: false, message: "Cannot place order in COD" });
         }
 
@@ -60,30 +64,90 @@ const createOrder = async (req, res) => {
             });
         }
 
-        if (orderData.paymentMethod === 'cod' && req.body.totalPrice <= 10000) {
-            // Reduce stock and save order for COD
+        if (orderData.paymentMethod === 'cod' && req.body.totalPrice <= 1000) {
             for (const item of orderData.items) {
-                await Product.findByIdAndUpdate(
+                const product = await Product.findByIdAndUpdate(
                     item.productId,
-                    { $inc: { stock: -item.quantity } }
+                    { $inc: { stock: -item.quantity } },
+                    { new: true } 
                 );
+                if (product) {
+                    product.orderCount = product.orderCount ? product.orderCount + 1 : 1;
+                    await product.save();
+                    // console.log(product.orderCount);
+                }
+                const catId = product.categoryId
+                
+                const cate = await category.findById(catId)
+                if (cate) {
+                    cate.orderCount = cate.orderCount ? cate.orderCount + 1 : 1;
+                    await cate.save();
+                    
+                }
+
             }
             orderData.paymentStatus = "pending";
             await orderData.save();
             await Cart.deleteOne({ userId: req.session.userId });
             res.json({ success: true, paymentStatus: 'COD' });
         } else if (orderData.paymentMethod === 'RazorPay') {
-            // For Razorpay, we'll save the order but not reduce stock yet
             orderData.paymentStatus = "pending";
+            orderData.items.forEach((elem)=>elem.itemStatus = "pending")
             await orderData.save();
             let razorpayOrder = await onlinePayment(orderData.totalPrice, orderData._id);
             res.json({ status: 'success', paymentStatus: 'ONLINE-PAYMENT', newOrder: razorpayOrder });
+        }else if(orderData.paymentMethod === 'wallet'){
+            const userWallet = await Wallet.findOne({userId:req.session.userId})
+            if(userWallet && userWallet.balance >= req.body.totalPrice){
+                userWallet.balance -= req.body.totalPrice
+                
+                userWallet.transactions.push({
+                    description: `Payment for Order #${orderData.orderId}`,
+                    amount: req.body.totalPrice,
+                    type: 'debit',
+                });
+        
+                await userWallet.save()
+
+                for(const item of orderData.items){
+                    const product = await Product.findByIdAndUpdate(
+                        item.productId,
+                        {$inc:{stock: -item.quantity}},
+                        {new:true}
+                    );
+                    if(product){
+                        product.orderCount = product.orderCount ? product.orderCount +1 :1
+                        await product.save()
+                    }
+                    const catId = product.categoryId
+                    const cate = await Category.findById(catId)
+                    if(cate){
+                        cate.orderCount = cate.orderCount ? cate.orderCount + 1 : 1
+                        await cate.save()
+                    }
+                }
+                orderData.paymentStatus = 'completed'
+                await orderData.save()
+                await Cart.deleteOne({userId:req.session.userId})
+                res.json({success:true,paymentStatus:'WALLET'})
+            }else{
+                res.json({success:false,message:"Insuffient Balance"})
+            }
         }
     } catch (error) {
         console.error('Error creating order:', error);
-        res.status(500).json({ success: false, message: 'An unexpected error occurred. Please try again later.' });
+        res.render('500')
     }
 };
+const repay = async(req,res)=>{
+    try {
+        const response = await onlinePayment(req.body.totalPrice,req.body.orderId);
+        console.log(response)
+        res.json({success:true,newOrder:response});
+    } catch (error) {
+        console.log('error on repay',error);
+    }
+}
 
 const verifyPayment = async (req, res) => {
     try {
@@ -96,18 +160,31 @@ const verifyPayment = async (req, res) => {
             if (!order) {
                 return res.json({ status: 'failed', message: 'Order not found' });
             }
-
             // Update order status and payment status
             order.status = 'pending';
             order.paymentStatus = 'success';
+            order.items.forEach((elem)=>elem.itemStatus = 'ordered');
             await order.save();
 
             // Reduce stock
             for (const item of order.items) {
-                await Product.findByIdAndUpdate(
+               const product =  await Product.findByIdAndUpdate(
                     item.productId,
                     { $inc: { stock: -item.quantity } }
                 );
+                if (product) {
+                    product.orderCount = product.orderCount ? product.orderCount + 1 : 1;
+                    await product.save();
+                    console.log(product.orderCount);
+                }
+                const catId = product.categoryId
+                
+                const cate = await category.findById(catId)
+                if (cate) {
+                    cate.orderCount = cate.orderCount ? cate.orderCount + 1 : 1;
+                    await cate.save();
+                    
+                }
             }
 
             // Delete cart
@@ -119,8 +196,8 @@ const verifyPayment = async (req, res) => {
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ status: 'failed', message: 'An error occurred during payment verification' });
-    }
+        res.render('500')
+        }
 };
 
 
@@ -133,14 +210,97 @@ const orderComplete=async(req,res)=>{
         await Cart.deleteOne({ userId: req.session.userId })
         res.render("orderComplete", { user: userData, order: orderData ,isLogin: req.session.userId ? true : false})
     } catch (error) {
-        
+        console.log(error.message)
+        res.render('500')
     }
 }
+
+
+const generateInvoice = async (req, res) => {
+    const { orderId, itemId } = req.params;
+    try {
+        const order = await Order.findById(orderId).populate('items.productId');
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        const item = order.items.find(item => item._id.toString() === itemId);
+        if (!item) {
+            return res.status(404).json({ success: false, message: "Item not found" });
+        }
+
+        const address = order.address;
+        const doc = new pdfDocument({
+            size: 'A4',
+            margin: 50
+        });
+
+        res.setHeader('Content-Disposition', `attachment; filename=Invoice_${orderId}_${itemId}.pdf`);
+        res.setHeader('Content-Type', 'application/pdf');
+
+        // Pipe the document to the response
+        doc.pipe(res);
+
+        // Header section
+        doc.fontSize(25).text('ESSENZI', { align: 'left' }).moveDown(0.5);
+        doc.fontSize(20).text('INVOICE', { align: 'center' }).moveDown(1.5);
+
+        // Order and item details on the left
+        doc.fontSize(12)
+            .text(`Order ID: ${order._id}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Item Name: ${item.productId.name}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Price: Rs. ${item.itemPrice}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Quantity: ${item.quantity}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Paid Amount: Rs. ${item.productId.discountPrice * item.quantity}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Status: ${item.itemStatus}`, { align: 'left' })
+            .moveDown(0.5)
+            .text(`Payment Method: ${order.paymentMethod}`, { align: 'left' })
+            .moveDown(1.5);
+
+        // Address on the right
+        const rightX = 300;
+        doc.fontSize(12)
+            .text(`Billing Address:`, rightX, 150)
+            .moveDown(0.5)
+            .text(`Name: ${address.name}`, rightX)
+            .moveDown(0.5)
+            .text(`Street: ${address.street}`, rightX)
+            .moveDown(0.5)
+            .text(`City: ${address.city}`, rightX)
+            .moveDown(0.5)
+            .text(`State: ${address.state}`, rightX)
+            .moveDown(0.5)
+            .text(`Zipcode: ${address.zipcode}`, rightX)
+            .moveDown(0.5)
+            .text(`Mobile: ${address.mobile}`, rightX)
+            .moveDown(1.5);
+
+        // Footer or Thank you note
+        doc.moveDown(2);
+        doc.text('Thank you for your purchase!', { align: 'center' });
+
+        // Finalize the PDF and end the stream
+        doc.end();
+
+    } catch (error) {
+        console.log(error.message);
+        res.render('500');
+    }
+};
+
+
+
 
 
 module.exports={
     createOrder,
     orderComplete,
     verifyPayment,
-   
+    generateInvoice,
+    repay
 }

@@ -1,0 +1,505 @@
+<%- include('../layout/adminlayout/header')-%>
+
+<div class="col-lg-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Hoverable Table</h4>
+            <p class="card-description">Product <code>Offer</code></p>
+            <button class="badge badge-success border-0" id="openAddProductOfferModal">Add Offer</button>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Percentage</th>
+                            <th>Expiry Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% offers.forEach(offer => { %>
+                        <tr>
+                            <td><%= offer.productId ? offer.productId.name : 'n/a' %></td>
+                            <td><%= offer.percentage %></td>
+                            <td class="text-danger"><%= new Date(offer.expiryDate).toLocaleDateString() %></td>
+                            <td>
+                                <label class="badge badge-warning editOfferButton" data-offer='<%= JSON.stringify(offer) %>'>Edit</label>
+                                <label class="badge badge-info deleteOfferButton" data-offer-id="<%= offer._id %>">Delete</label>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Offer Modal -->
+<div id="addProductOfferModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="addProductOfferForm">
+            <div class="form-group">
+                <label for="productId" style="color: black;">Product:</label>
+                <select id="productId" name="productId" required>
+                    <% products.forEach(product => { %>
+                    <option value="<%= product._id %>"><%= product.name %></option>
+                    <% }); %>
+                </select>
+                <div id="productIdError" style="color: red; display: none;"></div>
+            </div>
+            <div class="form-group">
+                <label for="offerPercentage" style="color: black;">Percentage:</label>
+                <input type="number" id="offerPercentage" name="percentage">
+                <div id="percentageError" style="color: red; display: none;"></div>
+            </div>
+            <div class="form-group">
+                <label for="offerExpiryDate" style="color: black;">Expiry Date:</label>
+                <input type="date" id="offerExpiryDate" name="expiryDate">
+                <div id="expiryDateError" style="color: red; display: none;"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Offer</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Offer Modal -->
+<div id="editProductOfferModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Edit Offer</h2>
+        <form id="editProductOfferForm">
+            <input type="hidden" id="editOfferId" name="offerId">
+            <div class="form-group">
+                <label for="editProductId">Product:</label>
+                <select id="editProductId" name="productId" required>
+                    <% products.forEach(product => { %>
+                    <option value="<%= product._id %>"><%= product.name %></option>
+                    <% }); %>
+                </select>
+                <div id="editProductIdError" style="color: red; display: none;"></div>
+            </div>
+            <div class="form-group">
+                <label for="editOfferPercentage">Percentage:</label>
+                <input type="number" id="editOfferPercentage" name="percentage">
+                <div id="editPercentageError" style="color: red; display: none;"></div>
+            </div>
+            <div class="form-group">
+                <label for="editOfferExpiryDate">Expiry Date:</label>
+                <input type="date" id="editOfferExpiryDate" name="expiryDate">
+                <div id="editExpiryDateError" style="color: red; display: none;"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Offer</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+        animation: fadeIn 0.5s;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 500px;
+        animation: slideIn 0.5s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #80bdff;
+        outline: none;
+        box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 4px #999;
+        transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+        box-shadow: 0 6px #666;
+        transform: translateY(-2px);
+    }
+
+    .btn:active {
+        background-color: #0056b3;
+        box-shadow: 0 2px #666;
+        transform: translateY(2px);
+    }
+
+    @keyframes slideIn {
+        from {bottom: -300px; opacity: 0} 
+        to {bottom: 0; opacity: 1}
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0} 
+        to {opacity: 1}
+    }
+    #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #333; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+</style>
+<div id="snackbar"></div>
+<script>
+   
+document.addEventListener('DOMContentLoaded', function () {
+    // Add Offer Modal
+    var addModal = document.getElementById("addProductOfferModal");
+    var openAddModalBtn = document.getElementById("openAddProductOfferModal");
+    var closeAddModalSpan = addModal.querySelector(".close");
+
+    openAddModalBtn.onclick = function() {
+        addModal.style.display = "block";
+    }
+
+    closeAddModalSpan.onclick = function() {
+        addModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == addModal) {
+            addModal.style.display = "none";
+        }
+    }
+
+    document.getElementById('addProductOfferForm').onsubmit = function(event){
+        event.preventDefault();
+
+        // Clear previous errors
+        document.getElementById('productIdError').style.display = 'none';
+        document.getElementById('percentageError').style.display = 'none';
+        document.getElementById('expiryDateError').style.display = 'none';
+
+        // Validate form
+        let isValid = true;
+
+        const productId = document.getElementById('productId').value;
+        const percentage = document.getElementById('offerPercentage').value;
+        const expiryDate = document.getElementById('offerExpiryDate').value;
+
+        if (!productId) {
+            document.getElementById('productIdError').innerText = 'Please select a product.';
+            document.getElementById('productIdError').style.display = 'block';
+            isValid = false;
+        }
+
+        if (!percentage || percentage <= 0 || percentage > 99) {
+            document.getElementById('percentageError').innerText = 'Please enter a valid percentage.';
+            document.getElementById('percentageError').style.display = 'block';
+            isValid = false;
+        }
+
+        if (!expiryDate) {
+    document.getElementById('expiryDateError').innerText = 'Please select an expiry date.';
+    document.getElementById('expiryDateError').style.display = 'block';
+    isValid = false;
+} else {
+    const selectedDate = new Date(expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to midnight to avoid issues with the time of day
+
+    if (selectedDate < today) {
+        document.getElementById('expiryDateError').innerText = 'The expiry date cannot be in the past.';
+        document.getElementById('expiryDateError').style.display = 'block';
+        isValid = false;
+    }
+}
+
+
+        if (isValid) {
+            fetch('/admin/productOffer/add', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    productId,
+                    percentage,
+                    expiryDate
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showsnackbar('Offer added');
+                    setTimeout(()=>{
+                        location.reload();
+                    },1000)
+                    addModal.style.display = 'none';
+                } else {
+                    showsnackbar('Unable to add offer');
+                }
+            })
+            .catch(error => {
+                console.log(error.message);
+            });
+        }
+    }
+
+    // Edit Offer Modal
+    var editModal = document.getElementById("editProductOfferModal");
+    var closeEditModalSpan = editModal.querySelector(".close");
+
+    document.querySelectorAll('.editOfferButton').forEach(button => {
+        button.addEventListener('click', function() {
+            const offer = JSON.parse(this.getAttribute('data-offer'));
+
+            document.getElementById('editProductId').value = offer.productId._id;
+            document.getElementById('editOfferPercentage').value = offer.percentage;
+            document.getElementById('editOfferExpiryDate').value = new Date(offer.expiryDate).toISOString().split('T')[0];
+            document.getElementById('editOfferId').value = offer._id;
+
+            editModal.style.display = "block";
+        });
+    });
+
+    closeEditModalSpan.onclick = function() {
+        editModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == editModal) {
+            editModal.style.display = "none";
+        }
+    }
+
+    document.getElementById('editProductOfferForm').onsubmit = function(event) {
+        event.preventDefault();
+
+        // Clear previous errors
+        document.getElementById('editProductIdError').style.display = 'none';
+        document.getElementById('editPercentageError').style.display = 'none';
+        document.getElementById('editExpiryDateError').style.display = 'none';
+
+        // Validate form
+        let isValid = true;
+
+        const offerId = document.getElementById('editOfferId').value;
+        const productId = document.getElementById('editProductId').value;
+        const percentage = document.getElementById('editOfferPercentage').value;
+        const expiryDate = document.getElementById('editOfferExpiryDate').value;
+
+        if (!productId) {
+            document.getElementById('editProductIdError').innerText = 'Please select a product.';
+            document.getElementById('editProductIdError').style.display = 'block';
+            isValid = false;
+        }
+
+        if (!percentage || percentage <= 0 || percentage>99 ) {
+            document.getElementById('editPercentageError').innerText = 'Please enter a valid percentage.';
+            document.getElementById('editPercentageError').style.display = 'block';
+            isValid = false;
+        }
+
+        if (!expiryDate) {
+    document.getElementById('editExpiryDateError').innerText = 'Please select an expiry date.';
+    document.getElementById('editExpiryDateError').style.display = 'block';
+    isValid = false;
+} else {
+    const selectedDate = new Date(expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to midnight to avoid issues with the time of day
+
+    if (selectedDate < today) {
+        document.getElementById('editExpiryDateError').innerText = 'The expiry date cannot be in the past.';
+        document.getElementById('editExpiryDateError').style.display = 'block';
+        isValid = false;
+    } else {
+        document.getElementById('editExpiryDateError').style.display = 'none';
+    }
+}
+
+
+        if (isValid) {
+            fetch('/admin/productOffer/edit', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    offerId,
+                    productId,
+                    percentage,
+                    expiryDate
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showsnackbar('Offer updated');
+                    setTimeout(()=>{
+                        location.reload();
+                    },1000)
+                    editModal.style.display = 'none';
+                } else {
+                    showsnackbar('Unable to update offer');
+                }
+            })
+            .catch(error => {
+                console.log(error.message);
+            });
+        }
+    }
+
+    document.querySelectorAll('.deleteOfferButton').forEach(button => {
+        button.addEventListener('click', function() {
+            const offerId = this.getAttribute('data-offer-id');
+            console.log(offerId);
+            fetch('/admin/productOffer/delete', {
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ offerId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showsnackbar('Offer deleted');
+                    setTimeout(()=>{
+                        location.reload();
+                    },1000)
+                } else {
+                    showsnackbar('Unable to delete offer');
+                }
+            })
+            .catch(error => {
+                console.log(error.message);
+            });
+        });
+    });
+});
+    function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+  x.innerHTML = text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+</script>
+
+<%- include('../layout/adminlayout/footer')-%>

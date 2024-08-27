@@ -92,7 +92,7 @@
     <div class="card">
       <div class="card-body">
         <h4 class="card-title">Coupon</h4>
-        <p class="card-description">coupon <code>.table-hover</code></p>
+        <p class="card-description">coupons <code></code></p>
         <button class="badge badge-info border-0" data-toggle="modal" data-target="#addCouponModal">Add coupon</button>
         <div class="table-responsive">
           <table class="table table-hover">
@@ -127,13 +127,10 @@
                       <%=coupon.expiryDate.toLocaleDateString()%>
                     </td>
                     <td>
-                      <button 
-                      class="badge badge-info border-0" 
-                      data-toggle="modal" 
-                      data-target="#editCouponModal" 
-                      onclick="editCoupon('<%= coupon.couponCode %>', '<%= coupon.percentage %>', '<%= coupon.minAmount %>', '<%= coupon.maxRedeemAmount %>', '<%= coupon.expiryDate.toISOString().slice(0, 10) %>', '<%= coupon._id %>')">
-                      Edit
-                  </button>
+                      <button class="badge badge-info border-0" data-toggle="modal" data-target="#editCouponModal"
+                        onclick="editCoupon('<%= coupon.couponCode %>', '<%= coupon.percentage %>', '<%= coupon.minAmount %>', '<%= coupon.maxRedeemAmount %>', '<%= coupon.expiryDate.toISOString().slice(0, 10) %>', '<%= coupon._id %>')">
+                        Edit
+                      </button>
                       <button class="badge badge-danger border-0"
                         onclick="deleteCoupon('<%= coupon._id %>')">Delete</button>
                     </td>
@@ -162,24 +159,25 @@
           <form id="addCouponForm">
             <div class="form-group">
               <label for="couponCode">Coupon Code</label>
-              <input type="text" class="form-control" id="couponCode" name="couponCode" required>
+              <input type="text" class="form-control" id="couponCode" name="couponCode" style="color: white;;">
             </div>
             <div class="form-group">
               <label for="percentage">Percentage</label>
-              <input type="number" class="form-control" id="percentage" name="percentage" required>
+              <input type="number" class="form-control" id="percentage" name="percentage" style="color: white;">
             </div>
             <div class="form-group">
               <label for="minAmount">Min Amount</label>
-              <input type="number" class="form-control" id="minAmount" name="minAmount" required>
+              <input type="number" class="form-control" id="minAmount" name="minAmount" style="color: white;">
             </div>
             <div class="form-group">
               <label for="redeemAmount">Redeem Amount</label>
-              <input type="number" class="form-control" id="redeemAmount" name="redeemAmount" required>
+              <input type="number" class="form-control" id="addRedeemAmount" name="redeemAmount" style="color: white;;">
             </div>
             <div class="form-group">
               <label for="expiryDate">Expiry Date</label>
-              <input type="date" class="form-control" id="expiryDate" name="expiryDate" required>
+              <input type="date" class="form-control" id="expiryDate" name="expiryDate" style="color: white;">
             </div>
+            <p id="error-message" style="color: red; display: none;"></p>
             <button type="submit" class="btn btn-primary">Save</button>
           </form>
         </div>
@@ -193,36 +191,37 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editCouponModalLabel">Edit Coupon</h5>
+          <h5 class="modal-title" id="editCouponButton">Edit Coupon</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
           <form id="editCouponForm">
+            <input type="hidden" id="couponIdInput">
             <div class="form-group">
               <label for="editCouponCode">Coupon Code</label>
-              <input type="text" class="form-control" id="editCouponCode" name="couponCode">
+              <input type="text" class="form-control" id="editCouponCode" name="couponCode" style="color: white;">
               <span id="editCouponCodeError" style="color: red;"></span>
             </div>
             <div class="form-group">
               <label for="editPercentage">Percentage</label>
-              <input type="number" class="form-control" id="editPercentage" name="percentage">
+              <input type="number" class="form-control" id="editPercentage" name="percentage" style="color: white;">
               <span id="editPercentageError" style="color: red;"></span>
             </div>
             <div class="form-group">
               <label for="editMinAmount">Min Amount</label>
-              <input type="number" class="form-control" id="editMinAmount" name="minAmount">
+              <input type="number" class="form-control" id="editMinAmount" name="minAmount" style="color: white;">
               <span id="editMinAmountError" style="color: red;"></span>
             </div>
             <div class="form-group">
               <label for="editRedeemAmount">Redeem Amount</label>
-              <input type="number" class="form-control" id="editRedeemAmount" name="redeemAmount">
+              <input type="number" class="form-control" id="editRedeemAmount" name="redeemAmount" style="color: white;">
               <span id="editRedeemAmountError" style="color: red;"></span>
             </div>
             <div class="form-group">
               <label for="editExpiryDate">Expiry Date</label>
-              <input type="date" class="form-control" id="editExpiryDate" name="expiryDate">
+              <input type="date" class="form-control" id="editExpiryDate" name="expiryDate" style="color: white;">
               <span id="editExpiryDateError" style="color: red;"></span>
             </div>
             <button type="submit" class="btn btn-primary">Save</button>
@@ -238,87 +237,133 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
   <script>
-    // Get references to the button and modal
-    const addOfferButton = document.querySelector('[data-target="#addCouponModal"]');
-    const addCouponModal = document.getElementById('addCouponModal');
-    const closeButton = addCouponModal.querySelector('.close');
+    document.addEventListener('DOMContentLoaded', function () {
+      const addOfferButton = document.querySelector('[data-target="#addCouponModal"]');
+      const addCouponModal = document.getElementById('addCouponModal');
+      const closeButton = addCouponModal.querySelector('.close');
+      const addCouponForm = document.getElementById('addCouponForm');
+      const errorMessage = document.getElementById('error-message');
 
-    // Function to open the modal
-    function openModal() {
-      addCouponModal.style.display = 'block';
-      addCouponModal.classList.add('show');
-    }
-
-    // Function to close the modal
-    function closeModal() {
-      addCouponModal.style.display = 'none';
-      addCouponModal.classList.remove('show');
-    }
-
-    // Add click event listeners
-    addOfferButton.addEventListener('click', openModal);
-    closeButton.addEventListener('click', closeModal);
-
-    // Optional: Close modal when clicking outside of it
-    window.addEventListener('click', function (event) {
-      if (event.target === addCouponModal) {
-        closeModal();
+      // Function to open the modal
+      function openModal() {
+        addCouponModal.style.display = 'block';
+        addCouponModal.classList.add('show');
       }
-    });
 
-    //add coupon
-    async function addCoupon(couponData) {
-      try {
-        const response = await fetch('/admin/coupon/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(couponData),
-        });
+      // Function to close the modal
+      function closeModal() {
+        addCouponModal.style.display = 'none';
+        addCouponModal.classList.remove('show');
+        errorMessage.style.display = 'none'; // Hide error message on modal close
+      }
 
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+      // Add click event listeners
+      addOfferButton.addEventListener('click', openModal);
+      closeButton.addEventListener('click', closeModal);
+
+      // Optional: Close modal when clicking outside of it
+      window.addEventListener('click', function (event) {
+        if (event.target === addCouponModal) {
+          closeModal();
+        }
+      });
+
+      // Validation function
+      function validateForm() {
+        const couponCode = document.getElementById('couponCode').value.trim();
+        const percentage = parseFloat(document.getElementById('percentage').value.trim());
+        const minAmount = parseFloat(document.getElementById('minAmount').value.trim());
+        const maxRedeemAmount = parseFloat(document.getElementById('addRedeemAmount').value.trim());
+        const expiryDate = document.getElementById('expiryDate').value;
+
+        if (!couponCode || isNaN(percentage) || isNaN(minAmount) || isNaN(maxRedeemAmount) || !expiryDate) {
+          errorMessage.textContent = 'All fields are required and must be filled out.';
+          errorMessage.style.display = 'block';
+          return false;
         }
 
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        console.error('Error adding coupon:', error);
-        throw error;
+        if (percentage >= 99 || percentage <= 0) {
+          errorMessage.textContent = 'Percentage should be less than 100.';
+          errorMessage.style.display = 'block';
+          return false;
+        }
+
+        const today = new Date().setHours(0, 0, 0, 0);
+        const selectedDate = new Date(expiryDate).setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+          errorMessage.textContent = 'Expiry date should not be in the past.';
+          errorMessage.style.display = 'block';
+          return false;
+        }
+        if (isNaN(minAmount) || minAmount < 0) {
+          errorMessage.textContent = "Minimum amount cannot be a negative number.";
+          errorMessage.style.display = 'block'
+          return false;
+        }
+
+        // Validate maxRedeemAmount
+        if (isNaN(maxRedeemAmount) || maxRedeemAmount < 0) {
+          errorMessage.textContent = "Redeemable amount cannot be a negative number.";
+          errorMessage.style.display = 'block'
+          return false;
+        }
+
+
+        return {
+          couponCode,
+          percentage,
+          minAmount,
+          maxRedeemAmount,
+          expiryDate,
+          minAmount,
+          maxRedeemAmount
+        };
       }
-    }
 
-    // Usage example:
-    document.getElementById('addCouponForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+      // Form submission
+      addCouponForm.onsubmit = async function (event) {
+        event.preventDefault();
 
-      const couponData = {
-        couponCode: document.getElementById('couponCode').value,
-        percentage: document.getElementById('percentage').value,
-        minAmount: document.getElementById('minAmount').value,
-        maxRedeemAmount: document.getElementById('redeemAmount').value,
-        expiryDate: document.getElementById('expiryDate').value
-      };
+        const couponData = validateForm();
+        if (!couponData) return;
 
-      try {
-        const result = await addCoupon(couponData);
-        console.log('Coupon added successfully:', result);
-        
-        showsnackbar('Coupon added successfully!');
-        
-        e.target.reset();
-        
-        $('#addCouponModal').modal('hide');
-        setTimeout(() => {
+        try {
+          const result = await addCoupon(couponData);
+          if (result.success) {
+            showsnackbar('Coupon added successfully');
+            setTimeout(() => {
+              location.reload();
+            }, 1000);
+            closeModal();
+          } else {
+            showsnackbar('Unable to add coupon');
+          }
+        } catch (error) {
+          console.log('Error adding coupon:', error);
+        }
+      }
 
-          window.location.reload()
-        }, 1000)
-        
-      } catch (error) {
-        console.error('Failed to add coupon:', error);
-      
-        showsnackbar('Failed to add coupon. Please try again.');
+      // Add coupon function
+      async function addCoupon(couponData) {
+        try {
+          const response = await fetch('/admin/coupon/add', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(couponData),
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          return await response.json();
+        } catch (error) {
+          console.error('Error adding coupon:', error);
+          throw error;
+        }
       }
     });
 
@@ -343,41 +388,26 @@
         console.log(error.message)
       }
     }
-    const editCouponButton = document.getElementById('editCouponButton')
-    editCouponButton.addEventListener('click', (event) => {
-      console.log(event.target)
+    function editCoupon(code, percentage, minAmount, maxRedeemAmount, expiryDate, id) {
+      document.getElementById("editCouponCode").value = code;
+      document.getElementById("editPercentage").value = percentage;
+      document.getElementById("editMinAmount").value = minAmount;
+      document.getElementById("editRedeemAmount").value = maxRedeemAmount;
+      document.getElementById("editExpiryDate").value = expiryDate;
+      document.getElementById("couponIdInput").value = id; // Set the couponId in hidden input
+    }
 
-      event.preventDefault()
-      const couponId = event.target.getAttribute('coupon-id')
-      console.log(couponId)
-      document.getElementById('editCouponCode').value = event.target.getAttribute('coupon-code')
-      document.getElementById('editPercentage').value = event.target.getAttribute('coupon-percentage')
-      document.getElementById('editMinAmount').value = event.target.getAttribute('coupon-minAmount')
-      document.getElementById('editRedeemAmount').value = event.target.getAttribute('coupon-maxRedeemAmount')
-      document.getElementById('editExpiryDate').value = event.target.getAttribute('coupon-date')
-      document.getElementById('editCouponForm').setAttribute('coupon-id',couponId)
-        
-    })
+    document.getElementById('editCouponForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      let couponId = document.getElementById('couponIdInput').value;
+      let couponCode = document.getElementById('editCouponCode').value;
+      let percentage = document.getElementById('editPercentage').value;
+      let minAmount = document.getElementById('editMinAmount').value;
+      let maxRedeemAmount = document.getElementById('editRedeemAmount').value;
+      let expiryDate = document.getElementById('editExpiryDate').value;
 
 
-    let editCouponForm = document.getElementById('editCouponForm')
-    editCouponForm.addEventListener('submit', (event) => {
-      event.preventDefault()
-
-      let couponCode = document.getElementById('editCouponCode').value
-      console.log(document.getElementById('editCouponCode').value,)
-      let percentage = document.getElementById('editPercentage').value
-      console.log(document.getElementById('editPercentage').value)
-      let minAmount = document.getElementById('editMinAmount').value
-      console.log(document.getElementById('editMinAmount').value)
-      let maxRedeemAmount = document.getElementById('editRedeemAmount').value
-      console.log(document.getElementById('editRedeemAmount').value)
-      let expiryDate = document.getElementById('editExpiryDate').value
-      console.log(document.getElementById('editExpiryDate').value)
-      const couponId = event.target.getAttribute('coupon-id')
-
-     
-      
 
       let editCouponCodeError = document.getElementById('editCouponCodeError')
       let editPercentageError = document.getElementById('editPercentageError')
@@ -437,56 +467,38 @@
       }
 
       if (isValid) {
-        // console.log('ath')
-        async function editCoupon(couponId) {
-          // conosle.log(couponId)
-          const couponData = {
-    couponCode: document.getElementById('editCouponCode').value,
-    percentage: document.getElementById('editPercentage').value,
-    minAmount: document.getElementById('editMinAmount').value,
-    maxRedeemAmount: document.getElementById('editRedeemAmount').value,
-    expiryDate: document.getElementById('editExpiryDate').value
-  };
+        const couponData = {
+          couponCode,
+          percentage,
+          minAmount,
+          maxRedeemAmount,
+          expiryDate
+        };
 
-          // console.log(couponData,'ggg')
-          try {
-            const response = await fetch(`/admin/coupon/${couponId}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(couponData)
-            })
-            const result = await response.json()
-            console.log(result, 'ha')
-            if (result.success) {
-              showsnackbar('edited successfully')
-              $('#editCouponModal').modal('hide');
-        setTimeout(() => {
+        try {
+          const response = await fetch(`/admin/coupon/edit/${couponId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(couponData)
+          });
 
-          window.location.reload()
-        }, 1000)
-
-            } else {
-              showsnackbar('cant edit please try again..')
-            }
-          } catch (error) {
-            console.log(error.message)
+          const result = await response.json();
+          if (result.success) {
+            showsnackbar('edited successfully');
+            $('#editCouponModal').modal('hide');
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            showsnackbar('Cannot edit. Please try again.');
           }
+        } catch (error) {
+          console.error('Error:', error);
         }
-        editCoupon(couponId)
       }
-
-
-    })
-    function editCoupon(code, percentage, minAmount, maxRedeemAmount, expiryDate, id) {
-    document.getElementById("editCouponCode").value = code;
-    document.getElementById("editPercentage").value = percentage;
-    document.getElementById("editMinAmount").value = minAmount;
-    document.getElementById("editRedeemAmount").value = maxRedeemAmount;
-    document.getElementById("editExpiryDate").value = expiryDate;
-    document.getElementById("editCouponId").value = id;
-}
+    });
 
     function showsnackbar(text) {
       // Get the snackbar DIV

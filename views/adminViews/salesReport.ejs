@@ -4,7 +4,7 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Hoverable Table</h4>
-            <p class="card-description">Add class <code>.table-hover</code></p>
+            <p class="card-description">Sales<code>report</code></p>
 
             <!-- Filter Section -->
             <div class="d-flex justify-content-between mb-3">
@@ -41,11 +41,11 @@
             <div class="d-flex justify-content-end mb-3">
                 <button type="button" class="btn btn-light" id="downloadPdfBtn"
                     style="box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2); margin-right: 10px;">
-                    <i class="mdi mdi-file-pdf"></i> Download Sales Report
+                    <i class="mdi mdi-file-pdf"></i> Download  pdf
                 </button>
                 <button type="button" class="btn btn-light" id="downloadExcelBtn"
                     style="box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2);">
-                    <i class="mdi mdi-file-excel-box"></i> Download Sales Report
+                    <i class="mdi mdi-file-excel-box"></i> Download excel
                 </button>
             </div>
 
@@ -58,7 +58,6 @@
                             <th>Quantity</th>
                             <th>Name</th>
                             <th>Total Price</th>
-                            <th>Discount</th>
                             <th>Payment Method</th>
                         </tr>
                     </thead>
@@ -71,13 +70,20 @@
                                     <td><%= orders[i].items.quantity %></td>
                                     <td><%= orders[i].user.name %></td>
                                     <td><%= orders[i].items.itemPrice * orders[i].items.quantity %></td>
-                                    <td><%= (orders[i].subtotal - orders[i].totalPrice) * orders[i].items.quantity %></td>
                                     <td><%= orders[i].paymentMethod %></td>
                                 </tr>
                             <% } %>
                             <tr>
                                 <td colspan="4" class="text-right"><strong>Total Number of Sales:</strong></td>
                                 <td colspan="3"><%= totalSales %></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4"><strong>Summary</strong></td>
+                                <td colspan="3"><%= totalPrice%></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4"><strong>Total Amount Paid</strong></td>
+                                <td colspan="3"><%= totalDiscounts%></td>
                             </tr>
                         <% } else { %>
                             <tr>

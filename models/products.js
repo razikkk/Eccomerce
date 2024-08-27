@@ -37,6 +37,10 @@ const productSchema=new Schema({
         type:Boolean,       
         default:false
     },
+    orderCount:{
+        type:Number,
+        default:0
+    },
     date: {
         type: Date,
         default: Date.now,

@@ -1,72 +1,360 @@
 <%- include('../layout/userlayout/header', { isLogin: isLogin }) -%>
-<style>
-    .product-img {
-        border-radius: 8px;
-    }
-</style>
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="text-center">Order Details</h2>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <style>
+        .product-img {
+            border-radius: 8px;
+        }
+
+        .product-img {
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        .cancel-section {
+            margin-top: auto;
+            /* Pushes the section to the bottom of the flex container */
+        }
+
+        .cancel-order-button,
+        .return-order-button {
+            width: 100%;
+        }
+
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+
+        /* Modal content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 40%;
+            /* Could be more or less, depending on screen size */
+            max-width: 500px;
+            /* Max width for larger screens */
+            border-radius: 10px;
+            /* Rounded corners */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            /* Shadow for depth */
+            transform: translateY(50%);
+            transition: transform 0.3s ease-out;
+            /* Smooth transition */
+        }
+
+        /* Close button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Input and textarea styles */
+        .modal-content input[type="hidden"],
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+
+        /* Button styles */
+        .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center">Order Details</h2>
+            </div>
+        </div>
+
+        <% order.items.forEach(item=> { %>
+            <div class="row my-4 p-4 border" style="background-color: #f9f9f9;">
+                <div class="col-md-4">
+                    <a href="/product/<%= item.productId._id %>">
+                        <div class="product-img"
+                            style="background-image: url(/static/user/images/<%= item.productId.images[0] %>); width: 100%; height: 200px; background-size: cover; background-position: center;">
+                        </div>
+                    </a>
+                    <% if (item.itemStatus==='ordered' || item.itemStatus==='pending' && item.itemStatus !='cancelled' && item.itemStatus !='pending' )
+                        { %>
+                        <div class="mt-3 text-center cancel-section">
+                            <p class="text-danger mb-2">Do you want to cancel this order?</p>
+                            <button class="cancel-order-button btn btn-danger"
+                                onclick="cancelOrder('<%= order._id %>', '<%= item._id %>')">Cancel Order</button>
+                        </div>
+                        <% } else if (item.itemStatus==='delivered' ) { %>
+                            <div class="mt-3 text-center cancel-section">
+                                <button class="return-order-button btn btn-warning"
+                                    onclick="openReturnModal('<%= order._id %>', '<%= item._id %>')">Return
+                                    Order</button>
+                                <button class="download-invoice-button btn btn-info ml-2"
+                                    onclick="downloadInvoice('<%= order._id %>', '<%= item._id %>')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                            <% } %>
+
+                </div>
+                <div class="col-md-8 d-flex flex-column justify-content-between">
+                    <div>
+                        <h3>
+                            <%= item.productId.name %>
+                        </h3>
+                        <p>Price: <span class="text-success">₹<%= item.productId.discountPrice %></span></p>
+                        <p>Description: <%= item.productId.description %>
+                        </p>
+                    </div>
+                    <div>
+                        <p>Quantity: <%= item.quantity %>
+
+                        </p>
+                        <p>Status: <%= item.itemStatus %>
+                        </p>
+                        <p>Payment Method: <%= order.paymentMethod %>
+                        </p>
+                        <p>Total Price:₹<%= order.totalPrice %>
+                        </p>
+                    </div>
+                    <div>
+                        <% if(item.itemStatus=="pending" ){ %>
+                            <button onclick="onPay('<%=order._id%>','<%=order.totalPrice%>')">pay now</button>
+                            <% } %>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+    <div id="returnOrderModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Return Order</h2>
+            <form id="returnOrderForm">
+                <input type="hidden" id="returnOrderId">
+                <input type="hidden" id="returnItemId">
+                <div>
+                    <label for="returnReason">Reason for Return:</label>
+                    <textarea id="returnReason" required></textarea>
+                </div>
+                <button type="submit">Submit</button>
+            </form>
         </div>
     </div>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        async function onPay(razorpayOrderId, amount) {
+            try {
+                let result = await fetch('/repay', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        totalPrice: "<%=order.totalPrice%>",
+                        orderId: "<%=order._id%>",
+                    })
+                })
+                let response = await result.json();
+                console.log(response)
+                if (response && response.newOrder && response.newOrder.id) {
+                    var options = {
+                        "key": "<%= razorpayKey %>",
+                        "amount": "<%=order.totalPrice%>" * 100, // Amount in paise
+                        "currency": "INR",
+                        "name": "Your Company Name",
+                        "description": "Order Payment",
+                        "order_id": response.newOrder.id, // Correct Razorpay order ID
+                        "handler": function (res) {
+                            console.log("Payment response: ", response);
 
-    <% order.items.forEach(item => { %>
-        <div class="row my-4 p-4 border" style="background-color: #f9f9f9;">
-            <div class="col-md-4">
-                <a href="/product/<%= item.productId._id %>">
-                    <div class="product-img" style="background-image: url(/static/user/images/<%= item.productId.images[0] %>); width: 100%; height: 200px; background-size: cover; background-position: center;"></div>
-                </a>
-                <% if (item.itemStatus === 'ordered' || item.itemStatus === 'pending' && item.itemStatus !='cancelled') { %>
-                    <button class="cancel-order-button" onclick="cancelOrder('<%= order._id %>', '<%= item._id %>')">Cancel Order</button>
-                <% } else if (item.itemStatus === 'delivered') { %>
-                    <button class="return-order-button" onclick="returnOrder('<%= order._id %>', '<%= item._id %>')">Return Order</button>
-                <% } %>
-                
-            </div>
-            <div class="col-md-8 d-flex flex-column justify-content-between">
-                <div>
-                    <h3><%= item.productId.name %></h3>
-                    <p>Price: <span class="text-success">₹<%= item.itemPrice %></span></p>
-                    <p>Description: <%= item.productId.description %></p>
-                </div>
-                <div>
-                    <p>Quantity: <%= item.quantity %></p>
-                    <p>Status: <%= item.itemStatus %></p>
-                    <p>Payment Method: <%= order.paymentMethod %></p>
-                    <p>Total Price:₹<%= order.totalPrice %></p>
-                </div>
-            </div>
-        </div>
-        
-    <% }) %>
-</div>
+                            // Send payment details to server for verification
+                            verifyPayment(response,response.newOrder)
+                        },
+                        "prefill": {
+                            "name": "", // You can prefill these fields if desired
+                            "email": "",
+                            "contact": ""
+                        },
+                        "theme": {
+                            "color": "#3399cc"
+                        }
+                    };
 
-
-<script>
-    function cancelOrder(orderId,itemId){
-        if(confirm("Are you sure you want to cancel this order?")){
-            fetch (`/profile/showOrder/showOrderDetails/cancel/${orderId}/${itemId}`,{
-                method:"POST",
-                headers:{
-                    'Content-Type' : 'application/json'
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                } else {
+                    console.error("Invalid response structure:", response);
                 }
-            })
-            .then(response=>response.json())
-            .then(data=>{
-                if(data.success){
-                    alert("Order cancelled successfully")
-                    location.reload()
-                }else{
-                    alert("Can't cancel Order. Please try again..")
-                }
-            })
-            .catch(error=>{
-                console.log(error.message)
-            })
+            } catch (error) {
+                console.log(error);
+            }
         }
-    }
-</script>
-<%- include('../layout/userlayout/footer') -%>
+        function verifyPayment(payment, order) {
+            try {
+                
+                $.ajax({
+                    url: '/cart/verifyPayment',
+                    data: {
+                        payment,
+                        order
+                    },
+                    method: 'POST',
+                    success: (response) => {
+                        console.log("payment successfull")
+                        if (response.paymentStatus == 'ONLINE-PAYMENT-SUCCESS') {
+                            location.href = '/orderComplete'
+                        }
+                    }
+                })
 
+            } catch (error) {
+                console.log(error)
+            }
+        }
 
+        function cancelOrder(orderId, itemId) {
+            if (confirm("Are you sure you want to cancel this order?")) {
+                fetch(`/profile/showOrder/showOrderDetails/cancel/${orderId}/${itemId}`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Order cancelled successfully")
+                            location.reload()
+                        } else {
+                            alert("Can't cancel Order. Please try again..")
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error.message)
+                    })
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            var returnModal = document.getElementById("returnOrderModal");
+            var closeReturnModalSpan = returnModal.querySelector(".close");
+
+            closeReturnModalSpan.onclick = function () {
+                returnModal.style.display = "none";
+            };
+
+            window.onclick = function (event) {
+                if (event.target == returnModal) {
+                    returnModal.style.display = "none";
+                }
+            };
+
+            document.getElementById('returnOrderForm').onsubmit = function (event) {
+                event.preventDefault();
+
+                const orderId = document.getElementById('returnOrderId').value;
+                const itemId = document.getElementById('returnItemId').value;
+                const reason = document.getElementById('returnReason').value;
+
+                fetch('/returnOrder', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        orderId,
+                        itemId,
+                        reason
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Return request submitted');
+                            location.reload();
+                        } else {
+                            alert('Unable to submit return request');
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error.message);
+                    });
+            };
+        });
+
+        function openReturnModal(orderId, itemId) {
+            document.getElementById('returnOrderId').value = orderId;
+            document.getElementById('returnItemId').value = itemId;
+            document.getElementById("returnOrderModal").style.display = "block";
+        }
+
+        
+        function downloadInvoice(orderId, itemId) {
+            fetch(`/invoice/${orderId}/${itemId}`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob()
+                    } else {
+                        throw new Error('failed to download invoice')
+                    }
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `Invoice_${orderId}_${itemId}.pdf`
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                    window.URL.revokeObjectURL(url)
+                })
+                .catch(error => {
+                    console.log(error.message)
+                })
+
+        }
+    </script>
+    <%- include('../layout/userlayout/footer') -%>

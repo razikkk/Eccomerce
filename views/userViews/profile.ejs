@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Profile</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .profile-container {
       margin-top: 80px;
@@ -120,9 +121,11 @@
 
             <% } %>
             <a href="/profile/wallet" class="btn btn-success">Wallet</a>
+           
             <a href="/logout" class="btn btn-secondary">Logout</a>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -180,6 +183,7 @@
                     <div class="mb-3">
                         <label for="newPassword" class="form-label">New Password</label>
                         <input type="password" class="form-control" id="newPassword" required>
+                        <p id="newPasswordError" style="color: red; display: none;"></p>
                     </div>
                     <div class="mb-3">
                         <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
@@ -195,80 +199,99 @@
         </div>
     </div>
 </div>
+
 <div id="snackbar"></div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-<script>
 
+<script>
+var myModal = new bootstrap.Modal(document.getElementById('referralCodeModal'), {
+  backdrop: 'static'
+});
+myModal.show();
 function submitPasswordChange() {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
-    const currentPasswordError=document.getElementById('currentPasswordError')
-    const confirmNewPasswordError=document.getElementById('confirmNewPasswordError')
-    let validate=true
+    const currentPasswordError = document.getElementById('currentPasswordError');
+    const newPasswordError = document.getElementById('newPasswordError');
+    const confirmNewPasswordError = document.getElementById('confirmNewPasswordError');
+    let validate = true;
 
-   
-    // Example of fetching data (you can customize this based on your backend setup)
-    const formData = {
-        oldPassword: currentPassword,
-        newPassword: newPassword,
-        confirmPassword: confirmNewPassword
-    };
-   
-     
-    if(currentPassword.trim()==''){
-      currentPasswordError.style.display='block'
-      validate=false
-    }
-    if(newPassword!=confirmNewPassword){
-      confirmNewPasswordError.style.display='block'
-      validate=false
+    // Clear previous error messages
+    currentPasswordError.style.display = 'none';
+    newPasswordError.style.display = 'none';
+    confirmNewPasswordError.style.display = 'none';
+
+    // Validation
+    if (currentPassword.trim() === '') {
+        currentPasswordError.textContent = 'Old password is required';
+        currentPasswordError.style.display = 'block';
+        validate = false;
     }
 
-    
-    
-   if(validate){
-    // Example fetch request to send formData to the server
-    fetch('/profile/changePassword', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showsnackbar('Password changed successfully!');
-            resetPasswordForm()
-            $('#changePasswordModal').modal('hide')
-            // window.location.reload()
-            // Optionally, clear form fields or perform other actions on success
-        } else {
+    if (newPassword.length < 8) {
+        newPasswordError.textContent = ' password must be at least 8 characters long';
+        newPasswordError.style.display = 'block';
+        validate = false;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        confirmNewPasswordError.textContent = "New password and confirm password don't match";
+        confirmNewPasswordError.style.display = 'block';
+        validate = false;
+    }
+
+    if (validate) {
+        // Example of fetching data (customize based on your backend setup)
+        const formData = {
+            oldPassword: currentPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmNewPassword
+        };
+
+        // Example fetch request to send formData to the server
+        fetch('/profile/changePassword', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showsnackbar('Password changed successfully!');
+                resetPasswordForm();
+                document.querySelector("#changePasswordModal .btn-close").click();
+
+               
+            } else {
+                showsnackbar('Failed to change password. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error changing password:', error);
             showsnackbar('Failed to change password. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Error changing password:', error);
-        showsnackbar('Failed to change password. Please try again.');
-    });
-  
-}}
+        });
+    }
+}
 
-function resetPasswordForm(){
-  document.getElementById('changePasswordForm').reset();
-    // Clear any error messages
+function resetPasswordForm() {
+    document.getElementById('changePasswordForm').reset();
     document.getElementById('currentPasswordError').style.display = 'none';
+    document.getElementById('newPasswordError').style.display = 'none';
     document.getElementById('confirmNewPasswordError').style.display = 'none';
 }
+
 document.addEventListener('DOMContentLoaded', function() {
     const changePasswordModal = document.getElementById('changePasswordModal');
     if (changePasswordModal) {
@@ -317,6 +340,22 @@ function validatePhoneNumber(mobile) {
         validate = false
     };
 
+    function validateName(name) {
+    const namePattern = /^[A-Za-z\s]+$/;
+    return namePattern.test(name);
+}
+if (name.trim() === '') {
+    nameError.style.display = 'block';
+    nameError.textContent = 'Name cannot be empty';
+    validate = false;
+} else if (!validateName(name)) {
+    nameError.style.display = 'block';
+    nameError.textContent = 'Name should contain only alphabets';
+    validate = false;
+} else {
+    nameError.style.display = 'none';
+}
+
 
     if(validate){
     fetch('/profile/editProfile', {
@@ -330,7 +369,9 @@ function validatePhoneNumber(mobile) {
     .then(data => {
       if (data.success) {
         showsnackbar('Profile updated successfully!');
-        $('#editProfileModal').modal('hide')
+        // $('#editProfileModal').modal('hide')
+        document.querySelector("#editProfileModal .btn-close").click();
+
         document.getElementById('uname').innerHTML =  data.user.name
         document.getElementById('uemail').innerHTML = data.user.email
         document.getElementById('uphone').innerHTML = data.user.mobile

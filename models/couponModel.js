@@ -23,7 +23,11 @@ const couponSchema = new Schema({
         type:Date,
         required:true,
         index:{expires:0}
-    }
+    },
+    usedBy:[{
+        type:Schema.Types.ObjectId,
+        ref:'User'
+    }]
 })
 
 module.exports = mongoose.model('Coupon',couponSchema)

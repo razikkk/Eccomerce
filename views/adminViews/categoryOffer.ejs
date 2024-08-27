@@ -3,9 +3,9 @@
 <div class="col-lg-12 grid-margin stretch-card">
     <div class="card">
         <div class="card-body">
-            <h4 class="card-title">Hoverable Table</h4>
-            <p class="card-description">Add class <code>.table-hover</code></p>
-            <button class="badge badge-success border-0" id="openModal">Add Offer</button>
+            <h4 class="card-title"></h4>
+            <p class="card-description"> <code>cateogory</code></p>
+            <button class="badge badge-success border-0" id="openAddModal">Add Offer</button>
 
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -22,10 +22,10 @@
                         <tr>
                             <td><%= offer.categoryId ? offer.categoryId.categoryName : 'n/a' %></td>
                             <td><%= offer.percentage %></td>
-                            <td class="text-danger"><%= new Date(offer.expiryDate).toLocaleDateString() %> <i class="mdi mdi-arrow-down"></i></td>
+                            <td class="text-danger"><%= new Date(offer.expiryDate).toLocaleDateString() %> </td>
                             <td>
-                                <label class="badge badge-warning">Edit</label>
-                                <label class="badge badge-info">Delete</label>
+                                <label class="badge badge-warning editOfferButton" data-offer='<%= JSON.stringify(offer) %>'>Edit</label>
+                                <label class="badge badge-info deleteOfferButton" data-offer-id="<%=offer._id%>">Delete</label>
                             </td>
                         </tr>
                         <% }); %>
@@ -39,29 +39,65 @@
 <!-- Add Offer Modal -->
 <div id="addOfferModal" class="modal">
     <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Add Offer</h2>
+        <span class="close" id="closeAddModal">&times;</span>
         <form id="addOfferForm">
             <div class="form-group">
-                <label for="category">Category:</label>
+                <label for="category" style="color: black;">Category:</label>
                 <select id="category" name="category" required>
                     <% categories.forEach(category => { %>
                     <option value="<%= category._id %>"><%= category.categoryName %></option>
                     <% }); %>
                 </select>
+                <div id="categoryError" style="color: red;"></div>
             </div>
             <div class="form-group">
-                <label for="percentage">Percentage:</label>
-                <input type="number" id="percentage" name="percentage" required>
+                <label for="percentage" style="color: black;">Percentage:</label>
+                <input type="number" id="percentage" name="percentage">
+                <div id="percentageError" style="color: red;"></div>
             </div>
             <div class="form-group">
-                <label for="expiryDate">Expiry Date:</label>
-                <input type="date" id="expiryDate" name="expiryDate" required>
+                <label for="expiryDate" style="color: black;">Expiry Date:</label>
+                <input type="date" id="expiryDate" name="expiryDate">
+                <div id="expiryDateError" style="color: red;"></div>
             </div>
             <button type="submit" class="btn btn-primary">Add Offer</button>
         </form>
     </div>
 </div>
+
+
+<!-- Edit Offer Modal -->
+<div id="editOfferModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeEditModal">&times;</span>
+        <h2>Edit Offer</h2>
+        <form id="editOfferForm">
+            <input type="hidden" id="editOfferId" name="offerId">
+            <div class="form-group">
+                <label for="editCategory">Category:</label>
+                <select id="editCategory" name="category" required>
+                    <% categories.forEach(category => { %>
+                    <option value="<%= category._id %>"><%= category.categoryName %></option>
+                    <% }); %>
+                </select>
+                <div id="editCategoryError" style="color: red;"></div>
+            </div>
+            <div class="form-group">
+                <label for="editPercentage">Percentage:</label>
+                <input type="number" id="editPercentage" name="percentage">
+                <div id="editPercentageError" style="color: red;"></div>
+            </div>
+            <div class="form-group">
+                <label for="editExpiryDate">Expiry Date:</label>
+                <input type="date" id="editExpiryDate" name="expiryDate">
+                <div id="editExpiryDateError" style="color: red;"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Edit Offer</button>
+        </form>
+    </div>
+</div>
+
+
 <style>
     .modal {
         display: none;
@@ -166,66 +202,317 @@
         from {opacity: 0} 
         to {opacity: 1}
     }
+    #snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #333; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
 </style>
+<div id="snackbar"></div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var modal = document.getElementById("addOfferModal");
-        var btn = document.getElementById("openModal");
-        var span = document.getElementsByClassName("close")[0];
+    
+   document.addEventListener('DOMContentLoaded', function () {
+    var addModal = document.getElementById("addOfferModal");
+    var openAddModalBtn = document.getElementById("openAddModal");
+    var closeAddModalBtn = document.getElementById("closeAddModal");
 
-        btn.onclick = function() {
-            modal.style.display = "block";
+    openAddModalBtn.onclick = function() {
+        addModal.style.display = "block";
+    }
+
+    closeAddModalBtn.onclick = function() {
+        addModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == addModal) {
+            addModal.style.display = "none";
+        }
+    }
+
+    function validateOfferForm(categoryId, percentage, expiryDate, errorElements) {
+        let isValid = true;
+        const percentageValue = parseFloat(percentage);
+        const expiryDateValue = new Date(expiryDate);
+        const today = new Date();
+
+        // Clear previous error messages
+        errorElements.categoryError.innerText = '';
+        errorElements.percentageError.innerText = '';
+        errorElements.expiryDateError.innerText = '';
+
+        if (!categoryId) {
+            errorElements.categoryError.innerText = 'Category is required';
+            isValid = false;
         }
 
-        span.onclick = function() {
-            modal.style.display = "none";
+        if (!percentage || isNaN(percentageValue)) {
+            errorElements.percentageError.innerText = 'Percentage is required and must be a valid number';
+            isValid = false;
+        } else if (percentageValue < 0 || percentageValue > 99) {
+            errorElements.percentageError.innerText = 'Percentage must be between 0 and 99';
+            isValid = false;
         }
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
+        if (!expiryDate) {
+            errorElements.expiryDateError.innerText = 'Expiry date is required';
+            isValid = false;
+        } else if (expiryDateValue < today) {
+            errorElements.expiryDateError.innerText = 'Expiry date cannot be in the past';
+            isValid = false;
         }
 
-        document.getElementById('addOfferForm').onsubmit = function(event){
-            event.preventDefault()
+        return isValid;
+    }
 
-            const categoryId = document.getElementById('category').value
-            const percentage = document.getElementById('percentage').value
-            const expiryDate = document.getElementById('expiryDate').value
-            
-            fetch('/admin/categoryOffer/addOffer',{
-                method:'POST',
-                headers:{
-                    "Content-Type":"application/json"
+    document.getElementById('addOfferForm').onsubmit = function(event) {
+        event.preventDefault();
+
+        const categoryId = document.getElementById('category').value;
+        const percentage = document.getElementById('percentage').value;
+        const expiryDate = document.getElementById('expiryDate').value;
+
+        const errorElements = {
+            categoryError: document.getElementById('categoryError'),
+            percentageError: document.getElementById('percentageError'),
+            expiryDateError: document.getElementById('expiryDateError')
+        };
+
+        if (validateOfferForm(categoryId, percentage, expiryDate, errorElements)) {
+            fetch('/admin/categoryOffer/addOffer', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
                 },
-                body:JSON.stringify({
+                body: JSON.stringify({
                     categoryId,
                     percentage,
                     expiryDate
                 })
             })
-            .then(response=>{
+            .then(response => {
                 if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
             })
-            
-            .then(data=>{
-                if(data.success){
-                    alert('offer added')
-                    location.reload()
-                }else{
-                    alert('cant add')
+            .then(data => {
+                if (data.success) {
+                    showsnackbar('Offer added successfully');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                    addModal.style.display = 'none';
+                } else {
+                    showsnackbar('Unable to add offer');
                 }
             })
-            .catch(error=>{
-                console.log(error.message)
-            })
+            .catch(error => {
+                console.log(error.message);
+            });
         }
+    }
+});
+
+
+    // Edit Offer Modal
+    var editModal = document.getElementById("editOfferModal");
+    var closeEditModalBtn = document.getElementById("closeEditModal");
+
+    closeEditModalBtn.onclick = function() {
+        editModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == editModal) {
+            editModal.style.display = "none";
+        }
+    }
+
+    // Edit offer button click
+    document.querySelectorAll('.editOfferButton').forEach(button => {
+        button.addEventListener('click', function() {
+            var offer = JSON.parse(this.getAttribute('data-offer'));
+            document.getElementById('editOfferId').value = offer._id;
+            document.getElementById('editCategory').value = offer.categoryId._id;
+            document.getElementById('editPercentage').value = offer.percentage;
+            document.getElementById('editExpiryDate').value = new Date(offer.expiryDate).toISOString().split('T')[0];
+            editModal.style.display = "block";
+        });
     });
+
+    document.getElementById("editOfferForm").onsubmit = function(event) {
+    event.preventDefault();
+
+    const offerId = document.getElementById("editOfferId").value;
+    const categoryId = document.getElementById("editCategory").value;
+    const percentage = document.getElementById("editPercentage").value;
+    const expiryDate = document.getElementById("editExpiryDate").value;
+
+    const errorElements = {
+        categoryError: document.getElementById('editCategoryError'),
+        percentageError: document.getElementById('editPercentageError'),
+        expiryDateError: document.getElementById('editExpiryDateError')
+    };
+
+    if (validateOfferForm(categoryId, percentage, expiryDate, errorElements)) {
+        fetch('/admin/categoryOffer/editOffer', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                offerId,
+                categoryId,
+                percentage,
+                expiryDate
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showsnackbar("Offer edited successfully");
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+                editModal.style.display = 'none';
+            } else {
+                showsnackbar("Can't edit offer, please try again");
+            }
+        })
+        .catch(error => {
+            console.log(error.message);
+        });
+    }
+}
+
+function validateOfferForm(categoryId, percentage, expiryDate, errorElements) {
+    let isValid = true;
+    const percentageValue = parseFloat(percentage);
+    const expiryDateValue = new Date(expiryDate);
+    const today = new Date();
+
+    // Clear previous error messages
+    errorElements.categoryError.innerText = '';
+    errorElements.percentageError.innerText = '';
+    errorElements.expiryDateError.innerText = '';
+
+    if (!categoryId) {
+        errorElements.categoryError.innerText = 'Category is required';
+        isValid = false;
+    }
+
+    if (!percentage || isNaN(percentageValue)) {
+        errorElements.percentageError.innerText = 'Percentage is required and must be a valid number';
+        isValid = false;
+    } else if (percentageValue < 0 || percentageValue > 99) {
+        errorElements.percentageError.innerText = 'Percentage must be between 0 and 99';
+        isValid = false;
+    }
+
+    if (!expiryDate) {
+        errorElements.expiryDateError.innerText = 'Expiry date is required';
+        isValid = false;
+    } else if (expiryDateValue < today) {
+        errorElements.expiryDateError.innerText = 'Expiry date cannot be in the past';
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.deleteOfferButton').forEach(button => {
+            button.addEventListener('click', function() {
+                var offerId = this.getAttribute('data-offer-id');
+                console.log(offerId,'hh')
+                    fetch('/admin/categoryOffer/delete', {
+                        method: 'DELETE',
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ offerId })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            showsnackbar('Offer deleted');
+                            setTimeout(()=>{
+                                location.reload();
+                            },1000)
+
+                        } else {
+                            showsnackbar('Unable to delete offer');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                
+            });
+        });
+    });
+
+    function showsnackbar(text) {
+  // Get the snackbar DIV
+  var x = document.getElementById("snackbar");
+    x.innerHTML = text
+  // Add the "show" class to DIV
+  x.className = "show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
 </script>
 
 <%- include('../layout/adminlayout/footer')-%>

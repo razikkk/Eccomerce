@@ -1,3 +1,11 @@
+<head>
+    <!-- ... other head elements ... -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
 <%- include('../layout/adminlayout/header')-%>
 
     <div class="col-10 grid-margin stretch-card">
@@ -9,7 +17,8 @@
                     enctype="multipart/form-data" onsubmit="return validateForm()">
                     <div class="form-group">
                         <label for="productName">Product Name</label>
-                        <input type="text" class="form-control" id="productName" name="name" placeholder="Name">
+                        <input type="text" class="form-control" id="productName" name="name" placeholder="Name"
+                            style="color: white;">
                         <small id="productNameError" class="text-danger"></small>
                     </div>
 
@@ -28,7 +37,7 @@
 
                     <div style="height: 100px; width: 30%;">
                         <label for="ocs-userImage" class="ocs-registration-label">Upload Image</label>
-                        <input type="file" id="ocs-userImage" name="image" accept="image/*"
+                        <input type="file" id="ocs-userImage" name="image" accept="image/webp, image/jpeg, image/png"
                             class="ocs-registration-input" multiple onchange="handleFileSelect(event)">
                         <small id="imageError" class="text-danger"></small>
                     </div>
@@ -36,21 +45,23 @@
                     <div class="form-group">
                         <label for="quantity">Quantity</label>
                         <input type="number" class="form-control" id="quantity" name="quantity"
-                            placeholder="Enter the Quantity">
+                            placeholder="Enter the Quantity" style="color: white;">
                         <small id="quantityError" class="text-danger"></small>
                     </div>
 
                     <div class="form-group">
                         <label for="price">Price</label>
-                        <input type="text" class="form-control" id="price" name="price" placeholder="Enter the Price">
+                        <input type="text" class="form-control" id="price" name="price" placeholder="Enter the Price"
+                            style="color: white;">
                         <small id="priceError" class="text-danger"></small>
                     </div>
 
-                    
+
 
                     <div class="form-group">
                         <label for="exampleTextarea1">Description</label>
-                        <textarea class="form-control" name="description" id="exampleTextarea1" rows="4"></textarea>
+                        <textarea class="form-control" name="description" id="exampleTextarea1" rows="4"
+                            style="color: white;"></textarea>
                         <small id="productDescriptionError" class="text-danger"></small>
                     </div>
 
@@ -62,7 +73,116 @@
     </div>
 
 
+    <!-- cropper -->
+    <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cropperModalLabel">Crop Images</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-row overflow-auto" id="imagesContainer" style="max-height: 500px;">
+                        <!-- Images will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="cropButton">Crop</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
     <script>
+        let croppers = [];
+        const input = document.getElementById('ocs-userImage');
+        const modal = document.getElementById('cropperModal');
+        const imagesContainer = document.getElementById('imagesContainer');
+        const cropButton = document.getElementById('cropButton');
+        const allowedTypes = ['image/webp', 'image/jpeg', 'image/png'];
+
+        input.addEventListener('change', function (event) {
+            const files = event.target.files;
+            let validFiles = true;
+            if (files && files.length > 0) {
+                imagesContainer.innerHTML = ''; // Clear previous images
+                croppers = []; // Reset croppers array
+
+                Array.from(files).forEach((file, index) => {
+                    if (!allowedTypes.includes(file.type)) {
+                        validFiles = false;
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.style.position = 'relative';
+                        imgWrapper.style.display = 'inline-block';
+                        imgWrapper.style.marginRight = '10px';
+
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '400px';
+                        img.id = `image${index}`;
+                        imgWrapper.appendChild(img);
+
+                        imagesContainer.appendChild(imgWrapper);
+
+                        // Initialize Cropper.js for the new image after it has been appended
+                        img.addEventListener('load', () => {
+                            const cropper = new Cropper(img, {
+                                aspectRatio: 1,
+                                viewMode: 2,
+                            });
+                            croppers.push(cropper);
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                if (validFiles) {
+                    $('#cropperModal').modal('show');
+                } else {
+                    alert('Please upload only .webp, .jpeg, or .png files.');
+                    input.value = ''; // Clear the file input
+                }
+            }
+        });
+
+        cropButton.addEventListener('click', function () {
+            croppers.forEach((cropper, index) => {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 400,
+                    height: 400,
+                });
+
+                canvas.toBlob(function (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const newImage = new File([blob], input.files[index].name, { type: blob.type });
+
+                    const dataTransfer = new DataTransfer();
+                    Array.from(input.files).forEach((file, i) => {
+                        if (i === index) {
+                            dataTransfer.items.add(newImage);
+                        } else {
+                            dataTransfer.items.add(file);
+                        }
+                    });
+                    input.files = dataTransfer.files;
+                });
+            });
+
+            $('#cropperModal').modal('hide');
+        });
+
+
         function validate() {
             let isValid = true;
 
@@ -86,44 +206,90 @@
             quantityError.textContent = '';
             priceError.textContent = '';
             productDescriptionError.textContent = '';
-            
 
             if (productName === '') {
-        productNameError.textContent = 'Product name is required';
-        isValid = false;
-    }
+                productNameError.textContent = 'Product name is required';
+                isValid = false;
+            } else if (!/^[A-Za-z\s]+$/.test(productName)) {
+                productNameError.textContent = 'Product name can only contain alphabets';
+                isValid = false;
+            } else {
+                productNameError.textContent = ''; // Clear the error message if validation passes
+            }
 
-    if (category === '') {
-        categoryError.textContent = 'Category is required';
-        isValid = false;
-    }
 
-    if (images.length < 3) {
-        imageError.textContent = 'Please upload at least three images';
-        isValid = false;
-    }
 
-    if (quantity === '' || isNaN(quantity) || quantity < 0) {
-        quantityError.textContent = 'Valid quantity is required';
-        isValid = false;
-    }
+            if (category === '') {
+                categoryError.textContent = 'Category is required';
+                isValid = false;
+            }
 
-    if (price === '' || isNaN(price) || price <= 0) {
-        priceError.textContent = 'Valid price is required';
-        isValid = false;
-    }
+            // Image validation
+            const allowedTypes = ['image/webp', 'image/jpeg', 'image/png'];
+            const maxSize = 50 * 1024 * 1024; // 50 MB
+            if (images.length < 3) {
+                imageError.textContent = 'Please upload at least three images';
+                isValid = false;
+            } else {
+                for (let i = 0; i < images.length; i++) {
+                    const file = images[i];
 
-    if (description === '') {
-        productDescriptionError.textContent = 'Description is required';
-        isValid = false;
-    }
+                    if (!allowedTypes.includes(file.type)) {
+                        imageError.textContent = 'Only .webp, .jpeg, and .png files are allowed';
+                        isValid = false;
+                        break;
+                    }
 
-    if (!isValid) {
-        event.preventDefault();
-    }
-    
-    return isValid;
+                    if (file.size > maxSize) {
+                        imageError.textContent = 'Each image must be smaller than 50MB';
+                        isValid = false;
+                        break;
+                    }
+                }
+            }
 
+            if (quantity === '' || isNaN(quantity) || quantity < 0) {
+                quantityError.textContent = 'Valid quantity is required';
+                isValid = false;
+            }
+
+            if (price === '' || isNaN(price) || price <= 0) {
+                priceError.textContent = 'Valid price is required';
+                isValid = false;
+            }
+
+            if (description === '') {
+                productDescriptionError.textContent = 'Description is required';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+
+            return isValid;
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            const allowedTypes = ['image/webp', 'image/jpeg', 'image/png'];
+            const maxSize = 50 * 1024 * 1024; // 50 MB
+            let imageError = document.getElementById('imageError');
+            imageError.textContent = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                if (!allowedTypes.includes(file.type)) {
+                    imageError.textContent = 'Only .webp, .jpeg, and .png files are allowed';
+                    break;
+                }
+
+                if (file.size > maxSize) {
+                    imageError.textContent = 'Each image must be smaller than 50MB';
+                    break;
+                }
+            }
         }
     </script>
 

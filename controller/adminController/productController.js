@@ -194,7 +194,7 @@ const editProduct = async (req, res) => {
         if (!category) {
             return res.status(404).send('Category not found');
         }
-
+        const discountprice = Math.floor(price - (price * 0.05));
         const product = await Product.findByIdAndUpdate(
             { _id: id },
             {
@@ -202,7 +202,7 @@ const editProduct = async (req, res) => {
                     name: productName,
                     categoryId: category._id,
                     price: price,
-                    discountPrice: discountPrice,
+                    discountPrice: discountprice,
                     stock: quantity,
                     description: productDescription
                 }

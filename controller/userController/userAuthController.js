@@ -57,7 +57,8 @@ passport.use(new GoogleStrategy({
      
       done(null, user);
     } catch (error) {
-      done(error, false);
+      console.log(error.message)
+      res.render('500')
     }
   }
 ));
@@ -91,8 +92,8 @@ const googleSuccess = async (req, res,next) => {
       await userWallet.save();
         res.redirect('/');
     }catch(error){
-        console.log(error.message);
-    }
+      res.render('500')
+        }
     
   }
 
@@ -102,9 +103,12 @@ const googleSuccess = async (req, res,next) => {
 
 const loadHomePage=async(req,res)=>{
     try {
-        res.render('home',{isLogin: req.session.userId ? true : false})
+      const bestSellers = await Product.find({isListed:false}).sort({sales:-1}).limit(10)
+
+        res.render('home',{isLogin: req.session.userId ? true : false,bestSellers})
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
 }
 const loginLoad=async(req,res)=>{
@@ -112,17 +116,18 @@ const loginLoad=async(req,res)=>{
          res.render('login',{isLogin: req.session.userId ? true : false})
    } catch (error) {
     console.log(error.message)
+    res.render('500')
    }
 }
+
 const registerLoad = async (req, res) => {
   try {
     if (req.method == "GET") {
-      console.log("4");
       res.render("registration", { isLogin: req.session.userId ? true : false });
     }
 
     if (req.method == "POST") {
-      const { name, email, mobile, password } = req.body;
+      const { name, email, mobile, password,referralCode } = req.body;
 
       const existingUser = await User.findOne({ email });
 
@@ -140,7 +145,18 @@ const registerLoad = async (req, res) => {
         email: email,
         mobile: mobile,
         password: hashedPassword,
+        referralCode:generateReferralCode(),
+        referralCodeUsed:referralCode || null
       };
+      if (referralCode) {
+        const referrer = await User.findOne({ referralCode });
+        if (referrer) {
+          referrer.balance += 10; // Add amount to referrer's balance (example amount)
+          newUser.balance += 5; // Add amount to new user's balance (example amount)
+          await referrer.save();
+          await newUser.save();
+        }
+      }
 
       const otp = generateOtp();
 
@@ -158,15 +174,17 @@ const registerLoad = async (req, res) => {
      
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    console.log(error.message)
+    res.render('500')
+    }
 };
 const otp = async (req, res) => {
     try {
       res.render("otp", { isLogin: false });
     } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+      console.log(error.message)
+      res.render('500')
+        }
   };
   const otpMailSender = async (req, res) => {
     try {
@@ -187,8 +205,9 @@ const otp = async (req, res) => {
         res.status(500).json({ msg: "mail not send successfully" });
       }
     } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+      console.log(error.message)
+      res.render('500')
+        }
   }; 
   const verifyOtp = async (req, res) => {
     try {
@@ -225,8 +244,9 @@ const otp = async (req, res) => {
         return res.status(400).json({ message: "Invalid OTP. Please try again." });
       }
     } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+      console.log(error.message)
+      res.render('500')
+        }
   };
    
 
@@ -235,6 +255,7 @@ const loginHome=async(req,res)=>{
         res.redirect('/')
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
 }
 
@@ -270,8 +291,8 @@ const verifyLogin = async(req,res)=>{
     res.render('login', {message: 'Please Enter an valid email', data: {email,password },isLogin: req.session.userId ? true : false})
    }
     } catch (error) {
-      console.log('ith')
         console.log(error.message);
+        res.render('500')
     }
 }
 
@@ -284,11 +305,18 @@ const verifyLogin = async(req,res)=>{
       }
   
       let user= await User.findById(userId)
+      if (!user.referralCode) {
+        user.referralCode = generateReferralCode();
+        await user.save();
+      }
       res.render('profile',{user:user,isLogin: req.session.userId ? true : false})
     } catch (error) {
       console.log('Catch error:', error.message);
-      res.status(500).send('Internal Server Error');
-    }
+      res.render('500')
+        }
+  };
+  const generateReferralCode = () => {
+    return Math.random().toString(36).substr(2, 9).toUpperCase();
   };
   
 
@@ -317,6 +345,7 @@ const verifyLogin = async(req,res)=>{
         res.render('showAddress',{addresses,user:user,isLogin: req.session.userId ? true : false})
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
   }
 
@@ -335,11 +364,10 @@ const verifyLogin = async(req,res)=>{
             mobile:mobile
         })
         await newAddress.save()
-        console.log(newAddress,'dhsidsa')
-        // res.redirect('/profile/showAddress')
         res.status(201).json({ success: true, message: 'Address added successfully', addresses: newAddress });
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
   }
 
@@ -358,6 +386,7 @@ const verifyLogin = async(req,res)=>{
 
     } catch (error) {
         console.log(error.message)
+        res.render('500')
     }
   }
 
@@ -381,7 +410,8 @@ const verifyLogin = async(req,res)=>{
             res.status(400).json({sucess:false,message:'not edited'})
         }
     } catch (error) {
-        
+        console.log(error.message)
+        res.render('500')
     }
   }
 
@@ -395,7 +425,8 @@ const verifyLogin = async(req,res)=>{
         const updatedUser = await user.save()
         res.json({success:true, user:updatedUser})
     } catch (error) {
-        
+        console.log(error.message)
+        res.render('500')
     }
   }
 
@@ -403,43 +434,32 @@ const verifyLogin = async(req,res)=>{
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
     try {
-        // Find the user by ID
         const user = await User.findOne({ _id: req.session.userId });
 
-        // If user not found, return error
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if the old password matches
         const passwordMatch = await bcrypt.compare(oldPassword, user.password);
 
-        // If passwords don't match, return error
         if (!passwordMatch) {
             return res.status(400).json({ message: 'Old password is incorrect' });
         }
 
-        // Check if newPassword and confirmPassword match
         if (newPassword !== confirmPassword) {
             return res.status(400).json({ message: 'New password and confirm password do not match' });
         }
 
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10); // Adjust the saltRounds as needed
-
-        // Update user's password with the hashed password
+        const hashedPassword = await bcrypt.hash(newPassword, 10); 
         user.password = hashedPassword;
 
-        // Save the updated user object
         await user.save();
 
-        // Respond with success message
         res.status(200).json({ success: true, message: 'Password updated successfully' });
     } catch (error) {
-        // Handle errors
         console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
+        res.render('500')
+          }
 };
 
 const loadForgotPassword=async(req,res)=>{
@@ -447,7 +467,8 @@ const loadForgotPassword=async(req,res)=>{
     const userData=await User.findOne({_id:req.session.userId})
     res.render('forgotPassword',{isLogin: req.session.userId ? true : false,user:userData})
   } catch (error) {
-    
+    console.log(error.message)
+    res.render('500')
   }
 }
 const resetPassword = async (req, res) => {
@@ -502,8 +523,8 @@ const resetPassword = async (req, res) => {
       }
   } catch (err) {
       console.log(err.message);
-      res.status(500).json({ message: 'Server error' });
-  }
+      res.render('500')
+      }
 };
 
 const newPasswordForm = async (req, res) => {
@@ -518,8 +539,8 @@ const newPasswordForm = async (req, res) => {
       res.render('resetPassword', { token, user: userData, isLogin: req.session.userId ? true : false });
   } catch (error) {
       console.log(error);
-      res.status(500).send('Server error');
-  }
+      res.render('500')
+    }
 };
 
 
@@ -549,7 +570,7 @@ const newPassword = async (req, res) => {
       }
   } catch (error) {
       console.log(error);
-      res.status(500).send('Server error');
+      res.render('500')
   }
 };
 
@@ -578,25 +599,40 @@ const showOrderLoad = async (req, res) => {
     });
   } catch (error) {
     console.log(error.message);
+    res.render('500')
   }
 };
 
 
-const showOrderDetails=async(req,res)=>{
+const showOrderDetails = async (req, res) => { 
   try {
-    const orderId=req.params.orderId;
-    console.log(orderId)
-    const order=await Order.findById(orderId).populate("items.productId",'name images price description')
-    console.log(order)
-    if(!order){
-      res.send("no order found")
+    const orderId = req.params.orderId;
+    const userId = req.session.userId; // Assuming you're storing the logged-in user's ID in the session
+
+    // Find the order by ID and populate the necessary fields
+    const order = await Order.findById(orderId).populate("items.productId", 'name images price description discountPrice');
+    
+    if (!order) {
+      return res.send("No order found");
     }
-    // const item= order.items.find()
-    res.render("showOrderDetails",{isLogin: req.session.userId ? true : false,order:order})
+
+    // Check if the logged-in user is the owner of the order
+    if (order.userId.toString() !== userId.toString()) {
+      return res.status(403).send("Unauthorized access to this order");
+    }
+
+    // If authorized, render the order details page
+    res.render("showOrderDetails", {
+      isLogin: req.session.userId ? true : false,
+      razorpayKey: process.env.RAZORPAY_KEY_ID,
+      order: order
+    });
   } catch (error) {
-    console.log(error.message)
+    console.log(error.message);
+    res.render('500');
   }
-}
+};
+
 
 const cancelOrder=async(req,res)=>{
   try {
@@ -618,42 +654,44 @@ const cancelOrder=async(req,res)=>{
     if(!product){
       return res.status(404).json({success:false,message:"product not found"})
     }
-    if(order.paymentMethod == 'RazorPay'){
-
-      const totalPrice = order.totalPrice
-      console.log(totalPrice,'halo')
+   
+    if (order.paymentMethod == 'RazorPay') {
+      const totalPrice =product.discountPrice * item.quantity ;
       const userId = req.session.userId;
       let userWallet = await Wallet.findOne({ userId: userId });
 
       if (!userWallet) {
-        userWallet = new Wallet({
-            userId,
-            balance: totalPrice,
-            transactions: [{
-                type: 'credit',
-                amount: totalPrice,
-                description: 'Order canceled - refund added to wallet'
-            }]
-        });
-    } else {
-        userWallet.balance += totalPrice;
-        userWallet.transactions.push({
-            type: 'credit',
-            amount: totalPrice,
-            description: 'Order canceled - refund added to wallet'
-        });
-    }
+          userWallet = new Wallet({
+              userId,
+              balance: totalPrice,
+              transactions: [{
+                  type: 'credit',
+                  amount: totalPrice,
+                  description: 'Order canceled - refund added to wallet'
+              }]
+          });
+      } else {
+          userWallet.balance += totalPrice;
+          userWallet.transactions.push({
+              type: 'credit',
+              amount: totalPrice,
+              description: 'Order canceled - refund added to wallet'
+          });
+      }
 
       await userWallet.save();
   }
-    product.stock+=item.quantity
-    await product.save()
-    await order.save()
-    res.json({success:true})
-    
-  } catch (error) {
-    console.log(error.message)
-  }
+
+  product.stock += item.quantity;
+  await product.save();
+  await order.save();
+
+  res.json({ success: true });
+
+} catch (error) {
+  console.log(error.message);
+  res.render('500')
+}
 }
 
 // Get Wishlist
@@ -670,12 +708,11 @@ const getWishlist = async (req, res) => {
     if (!user) {
       return res.status(404).send('User not found');
     }
-    console.log(user.wishlist)
     res.render('addToWishlist', { isLogin: req.session.userId ? true : false, products: user.wishlist });
   } catch (error) {
     console.log(error.message);
-    res.status(500).send('Server error');
-  }
+    res.render('500')
+    }
 };
 
 
@@ -699,7 +736,8 @@ const addToWishlist = async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log(error.message)
+    res.render('500')
   }
 };
 
@@ -715,7 +753,7 @@ const removeFromWishlist = async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ success: false, message: error.message });
+    res.render('500')
   }
 };
 const closeFromWishlist = async (req, res) => {
@@ -739,22 +777,27 @@ const closeFromWishlist = async (req, res) => {
       res.json({ success: true });
   } catch (error) {
       console.log(error.message);
-      res.status(500).json({ success: false, message: 'Server error' });
-  }
+      res.render('500')
+    }
 };
 
 const walletLoad = async(req,res)=>{
   try {
     const userId = req.session.userId
-    const wallet = await Wallet.find({userId:userId})
-    res.render('wallet',{isLogin: req.session.userId ? true : false,wallet:wallet,razorpayKey: process.env.RAZORPAY_KEY_ID})
+    const currentPage = parseInt(req.query.page) || 1
+    const itemPerPage = 5
+    const walletCount = await Wallet.countDocuments({userId:userId})
+    const totalPages = Math.ceil(walletCount/itemPerPage)
+    const wallet = await Wallet.find({userId:userId}).skip((currentPage-1)*itemPerPage).limit(itemPerPage).sort({date:-1})
+    res.render('wallet',{isLogin: req.session.userId ? true : false,wallet:wallet,razorpayKey: process.env.RAZORPAY_KEY_ID,currentPage:currentPage,totalPages:totalPages})
   } catch (error) {
     console.log(error)
+    res.render('500')
   }
 }
 
-const returnOrder = async (req, res) => {
-  const { orderId, itemId, action } = req.params;
+const returnOrderRequest = async (req, res) => {
+  const { orderId, itemId, reason } = req.body;
   try {
       const order = await Order.findById(orderId);
       const item = order.items.id(itemId);
@@ -763,29 +806,17 @@ const returnOrder = async (req, res) => {
           return res.status(404).json({ success: false, message: 'Item not found' });
       }
 
-      if (action === 'approved') {
-          item.returnStatus = 'approved';
-
-          // Find the user who placed the order
-          const user = await User.findById(order.userId);
-          if (!user) {
-              return res.status(404).json({ success: false, message: 'User not found' });
-          }
-
-          // Update the user's wallet balance
-          user.wallet += item.price;
-          await user.save();
-      } else if (action === 'rejected') {
-          item.returnStatus = 'rejected';
-      }
+      item.returnStatus = 'requested';
+      item.returnReason = reason;
 
       await order.save();
-      res.json({ success: true });
+      res.json({ success: true, message: 'Return request submitted' });
   } catch (error) {
       console.error(error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.render('500')
   }
 };
+
 const createOrder = async (req, res) => {
   try {
       const { amount } = req.body;
@@ -798,7 +829,7 @@ const createOrder = async (req, res) => {
       res.json({ orderId: order.id });
   } catch (error) {
       console.error('Error creating order:', error);
-      res.status(500).json({ error: 'Failed to create order' });
+      res.render('500')
   }
 };
 const verifyPaymentWallet = async (req, res) => {
@@ -860,7 +891,7 @@ module.exports={
     removeFromWishlist,
     closeFromWishlist,
     walletLoad,
-    returnOrder,
+    returnOrderRequest,
     createOrder,
     verifyPaymentWallet
 

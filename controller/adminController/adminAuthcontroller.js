@@ -4,6 +4,8 @@ const { log } = require('console');
 const adminModel = require('../../models/adminModel');
 const Category = require('../../models/category')
 const Order = require('../../models/orderModel')
+const User = require('../../models/userModel')
+const Product = require('../../models/products')
 const bcrypt = require('bcrypt');
 const { getSystemErrorMap } = require('util');
 const { default: mongoose } = require('mongoose');
@@ -49,11 +51,105 @@ const verifyLogin = async (req, res) => {
 
 const dashboardLoad = async (req, res) => {
     try {
-        res.render('dashboard');
+        const totalOrders = await Order.countDocuments()
+        const pendingOrders = await Order.countDocuments({status:"pending"})
+        const orderedOrders = await Order.countDocuments({status:"ordered"})
+        const returnedOrders = await Order.countDocuments({status:"returned"})
+
+
+        const revenue = await Order.aggregate([
+            {$group:{_id:null, total:{$sum:"$totalPrice"}}}
+        ])
+        const topProduct = await Product.find({isListed:false}).sort({orderCount: -1}).limit(10)
+        const topCategory = await Category.find({is_delete:false}).sort({orderCount: -1}).limit(10)
+
+        const razorpayRevenue = await Order.aggregate([
+            {
+                $match:{
+                    status:{$nin:['cancelled,returned']},
+                    paymentMethod:"RazorPay"
+                }
+            },
+            {$group:{
+                _id:null,
+                total:{$sum:"$totalPrice"}
+
+            }}
+        
+        ])
+        const totalRazorpayRevenue = razorpayRevenue.length > 0 ? razorpayRevenue[0].total : 0;
+        const codRevenue = await Order.aggregate([
+            {
+                $match:{
+                    status:{$nin:['cancelled,returned']},
+                    paymentMethod:"cod"
+                }
+            },
+            {$group:{
+                _id:null,
+                total:{$sum:"$totalPrice"}
+
+            }}
+        
+        ])
+        const totalCodRevenue = codRevenue.length > 0 ? codRevenue[0].total : 0 ;
+        res.render('dashboard',{
+            totalOrders,
+            pendingOrders,
+            orderedOrders,
+            returnedOrders,
+            revenue: revenue[0] ? revenue[0].total : 0,
+            topProduct,
+            topCategory,
+            totalRazorpayRevenue,
+            totalCodRevenue
+        });
     } catch (error) {
         console.log(error.message)
     }
 }
+
+const getOrderStats = async (req, res) => {
+    try {
+        const { period } = req.query; 
+        
+        const startDate = new Date();
+        
+        switch (period) {
+            case 'daily':
+                startDate.setDate(startDate.getDate() - 1);
+                break;
+            case 'weekly':
+                startDate.setDate(startDate.getDate() - 7);
+                break;
+            case 'monthly':
+                startDate.setMonth(startDate.getMonth() - 1);
+                break;
+            case 'yearly':
+                startDate.setFullYear(startDate.getFullYear() - 1);
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid period' });
+        }
+
+        let matchConditions = {date:{ $gte: startDate }};
+
+        const orders = await Order.aggregate([
+            { $match: matchConditions },
+            {
+                $group: {
+                    _id: { status: "$status" },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        res.json(orders);
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
 
 
 
@@ -109,19 +205,21 @@ const addCategory = async (req, res) => {
 
 const editCategory = async (req, res) => {
     try {
-        const already = await Category.findOne({ categoryName: req.body.categoryName })
+        const already = await Category.findOne({ categoryName: req.body.categoryName });
         if (already) {
-            return res.redirect('/admin/category')
+            return res.sendStatus(409);
         }
+
         await Category.findByIdAndUpdate(
             { _id: req.body.categoryId },
-            { $set: { categoryName: req.body.categoryName } },
-        )
-        res.redirect('/admin/category')
+            { $set: { categoryName: req.body.categoryName } }
+        );
+        res.sendStatus(200);
     } catch (error) {
         console.log(error.message);
     }
-}
+};
+
 
 const deleteCatergory = async (req, res) => {
     try {
@@ -164,12 +262,12 @@ const restoredCategory = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        req.session.userId = null
+        console.log("hattt")
+      delete req.session.adminId 
         res.redirect('/admin/login')
 
     } catch (error) {
         console.log(error.message)
-        res.redirect('/admin/dashboard')
     }
 }
 const filterSalesInterval = async (req, res) => {
@@ -178,7 +276,7 @@ const filterSalesInterval = async (req, res) => {
         let startDate;
         let today = new Date()
         today.setHours(0, 0, 0, 0)
-        
+
         switch (interval) {
             case "daily":
                 startDate = new Date(
@@ -249,7 +347,18 @@ const filterSalesInterval = async (req, res) => {
         ]);
 
         let totalSales = orderData.length
-       res.render('salesReport',{orders:orderData,totalSales})
+        let totalPrice =0;
+
+        let totalDiscounts =0;
+
+        orderData.forEach((order) => {
+            const itemPrice = order.items.itemPrice * order.items.quantity;
+            const discount = order.product.discountPrice || 0; // Assuming discount is stored in order.items.discount
+
+            totalPrice += itemPrice;
+            totalDiscounts += discount * order.items.quantity; // Calculate total discount for this item
+        });
+       res.render('salesReport',{orders:orderData,totalSales,totalPrice,totalDiscounts})
     } catch (error) {
         console.log(error.message)
     }
@@ -294,7 +403,18 @@ const filterSalesReport = async(req,res)=>{
             }
         ]);
         let totalSales = orderData.length
-        res.render('salesReport',{ orders: orderData,totalSales})
+        let totalPrice =0;
+
+        let totalDiscounts =0;
+
+        orderData.forEach((order) => {
+            const itemPrice = order.items.itemPrice * order.items.quantity;
+            const discount = order.product.discountPrice || 0; // Assuming discount is stored in order.items.discount
+
+            totalPrice += itemPrice;
+            totalDiscounts += discount * order.items.quantity; // Calculate total discount for this item
+        });
+        res.render('salesReport',{ orders: orderData,totalSales,totalPrice,totalDiscounts})
     } catch (error) {
         console.log(error.message)
     }
@@ -302,7 +422,10 @@ const filterSalesReport = async(req,res)=>{
 
 const salesReportLoad = async (req, res) => {
     try {
+        const startDate = new Date(req?.query?.startDate)
+        const endDate = new Date(req?.query?.endDate)
 
+        endDate.setHours(23,59,59,999)
 
         let orderData = await Order.aggregate([
             {
@@ -327,7 +450,7 @@ const salesReportLoad = async (req, res) => {
             {
                 $match: {
                     "items.itemStatus": "delivered",
-                    
+                    date: { $gte: startDate, $lte: endDate }
                 }
             },
             {
@@ -336,14 +459,26 @@ const salesReportLoad = async (req, res) => {
                 }
             }
         ]);
-        console.log(orderData)
+       
         let totalSales = orderData.length;
+        let totalPrice =0;
+        let totalDiscounts =0;
 
-        res.render('salesReport',{orders:orderData,totalSales})
+        orderData.forEach((order) => {
+            const itemPrice = order.items.itemPrice * order.items.quantity;
+            const discount = order.product.discountPrice || 0; // Assuming discount is stored in order.items.discount
+
+            totalPrice += itemPrice;
+            totalDiscounts += discount * order.items.quantity; // Calculate total discount for this item
+        });
+
+        res.render('salesReport',{orders:orderData,totalSales,totalPrice,totalDiscounts})
     } catch (error) {
         console.log(error.message)
     }
 }
+
+
 
 
 module.exports = {
@@ -360,7 +495,9 @@ module.exports = {
     logout,
     salesReportLoad,
     filterSalesInterval,
-    filterSalesReport
+    filterSalesReport,
+    getOrderStats
+    
 
 
 

@@ -11,7 +11,6 @@ let instance = new Razorpay({
 })
 
 const onlinePayment = async(amount,orderId)=>{
-    console.log("online payment-------" , amount,orderId)
     let options = {
         amount : amount*100,
         currency:"INR",
