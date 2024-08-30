@@ -76,6 +76,7 @@ adminRoute.post('/product/editProduct',auth.isLogin,upload.any(),productControll
 adminRoute.get('/orders',orderController.orderLoad)
 adminRoute.get('/orders/orderDetails/:orderId',orderController.OrderDetailsLoad)
 adminRoute.post('/orders/orderDetails/updateStatus',orderController.updateOrderStatus)
+adminRoute.patch('/orders/:orderId/items/:itemId/status', orderController.updateOrderItemStatus);
 
 
 //coupon

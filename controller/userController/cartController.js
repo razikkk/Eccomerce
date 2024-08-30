@@ -12,7 +12,7 @@ const loadCart=async(req,res)=>{
             res.redirect('/login')
         }
         const cartDatas = await Cart.findOne({ userId:userId }).populate("products.productId");
-        res.render('cart',{isLogin: req.session.userId ? true : false,cartDatas:cartDatas})
+        res.render('cart',{isLogin: req.session.userId ? true : false,cartDatas:cartDatas,cartCount:req.session.userId ? req.session.cartCount : 0 })
         
     } catch (error) {
         console.log(error.message)
@@ -52,7 +52,12 @@ const addToCart=async(req,res)=>{
                     { userId: req.session.userId },
                     { $push: { products: { productId: productId } } }
                 )
-                res.json({ success: true,message:'Product added to cart successfully' })
+                if(req.session.cartCount){
+                    req.session.cartCount+=1
+                }else{
+                    req.session.cartCount = 1
+                }
+                res.json({ success: true,message:'Product added to cart successfully',cartCount:req.session.userId ? req.session.cartCount : 0 })
             } else {
                 res.json({ success: false,message:'product is already in the cart' })
             }
@@ -121,6 +126,11 @@ const deleteFromCart = async (req, res) => {
 
         // Save the updated cart
         await cart.save();
+        if(req.session.cartCount){
+            req.session.cartCount-=1
+        }else{
+            req.session.cartCount = 0
+        }
 
         res.json({ success: true, message: 'Product has been removed' });
     } catch (error) {

@@ -30,7 +30,7 @@ const checkoutLoad=async(req,res)=>{
             }
         }
 
-        res.render('checkout',{user:user,isLogin: req.session.userId ? true : false,address:address,cartDatas:cartDatas,coupons:couponId,insufficientStock,updatedProducts})
+        res.render('checkout',{user:user,isLogin: req.session.userId ? true : false,address:address,cartDatas:cartDatas,coupons:couponId,insufficientStock,updatedProducts,cartCount:req.session.userId ? req.session.cartCount : 0 })
     } catch (error) {
         console.log(error.message)
         res.render('500')

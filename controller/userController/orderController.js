@@ -208,7 +208,7 @@ const orderComplete=async(req,res)=>{
         
         const orderData=await Order.findOne({userId : req.session.userId});
         await Cart.deleteOne({ userId: req.session.userId })
-        res.render("orderComplete", { user: userData, order: orderData ,isLogin: req.session.userId ? true : false})
+        res.render("orderComplete", { user: userData, order: orderData ,isLogin: req.session.userId ? true : false,cartCount:req.session.userId ? req.session.cartCount : 0 })
     } catch (error) {
         console.log(error.message)
         res.render('500')

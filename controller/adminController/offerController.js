@@ -23,6 +23,8 @@ const addCategoryOffer = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
 
+      
+
         const products = await Product.find({ categoryId: category._id }).populate('categoryId', 'name');
 
         for (let product of products) {

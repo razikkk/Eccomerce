@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
 } else {
     const selectedDate = new Date(expiryDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set the time to midnight to avoid issues with the time of day
+    today.setHours(0, 0, 0, 0); 
 
     if (selectedDate < today) {
         document.getElementById('editExpiryDateError').innerText = 'The expiry date cannot be in the past.';

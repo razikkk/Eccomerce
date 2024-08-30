@@ -25,10 +25,6 @@ const userSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"product"
     }],
-    referralCode:{type:String,unique:true},
-    referredBy:{
-        type:String
-    },
     balance:{
         type:Number,
         default:0

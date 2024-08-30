@@ -78,7 +78,8 @@ const loadShop = async (req, res) => {
             minPrice,
             maxPrice,
             isLogin: req.session.userId ? true : false,
-            wishlistProduct
+            wishlistProduct,
+            cartCount:req.session.userId ? req.session.cartCount : 0
 
 
         });
@@ -164,7 +165,7 @@ const loadProductDetails = async (req, res) => {
     try {
         let productDetail = await Product.findById(req.params.productId)
 
-        res.render('productDetails', { isLogin: req.session.userId ? true : false, productDetail })
+        res.render('productDetails', { isLogin: req.session.userId ? true : false, productDetail,cartCount:req.session.userId ? req.session.cartCount : 0 })
     } catch (error) {
         console.log(error.message)
         res.render('500')

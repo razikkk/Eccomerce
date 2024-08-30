@@ -1,6 +1,8 @@
 
 const User = require('../../models/userModel');
 const Address=require('../../models/addressModel')
+const mongoose = require('mongoose');
+
 require('dotenv').config();
 const bcrypt=require('bcrypt')
 const crypto=require('crypto')
@@ -9,7 +11,9 @@ const Order=require('../../models/orderModel')
 const Product=require('../../models/products')
 const sendMail=require('../../util/mailSender')
 const generateOtp=require('../../util/generateOtp')
+const Cart = require('../../models/cartModel')
 const Wallet = require('../../models/walletModel')
+
 const razorpay = require('razorpay')
 
 
@@ -32,8 +36,8 @@ const securePassword = async (password) => {
 // passport-setup.js
 const passport = require('passport');
 const { isLogin } = require('../../middleware/userAuth');
-const { findById, findOne } = require('../../models/cartModel');
-const products = require('../../models/products');
+// const { findById, findOne } = require('../../models/cartModel');
+// const products = require('../../models/products');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 
@@ -105,7 +109,7 @@ const loadHomePage=async(req,res)=>{
     try {
       const bestSellers = await Product.find({isListed:false}).sort({sales:-1}).limit(10)
 
-        res.render('home',{isLogin: req.session.userId ? true : false,bestSellers})
+        res.render('home',{isLogin: req.session.userId ? true : false,bestSellers,cartCount:req.session.userId ? req.session.cartCount : 0})
     } catch (error) {
         console.log(error.message)
         res.render('500')
@@ -123,7 +127,7 @@ const loginLoad=async(req,res)=>{
 const registerLoad = async (req, res) => {
   try {
     if (req.method == "GET") {
-      res.render("registration", { isLogin: req.session.userId ? true : false });
+      res.render("registration", { isLogin: req.session.userId ? true : false,cartCount:req.session.userId ? req.session.cartCount : 0  });
     }
 
     if (req.method == "POST") {
@@ -280,7 +284,15 @@ const verifyLogin = async(req,res)=>{
     if(passwordMatch){
 
         req.session.userId=userData._id
-        // console.log(req.session.userId,'loginn ayiii')
+        console.log(req.session.userId, userData._id, 'loginn ayiii')
+
+      
+        const cartDatas = await Cart.findOne({ userId:userData._id }).populate("products.productId");
+        if(cartDatas){
+        console.log(cartDatas, '88')
+        req.session.cartCount = cartDatas.products.length
+        }
+
         
         
         res.redirect('/',);
@@ -309,7 +321,7 @@ const verifyLogin = async(req,res)=>{
         user.referralCode = generateReferralCode();
         await user.save();
       }
-      res.render('profile',{user:user,isLogin: req.session.userId ? true : false})
+      res.render('profile',{user:user,isLogin: req.session.userId ? true : false,cartCount:req.session.userId ? req.session.cartCount : 0 })
     } catch (error) {
       console.log('Catch error:', error.message);
       res.render('500')
@@ -342,7 +354,7 @@ const verifyLogin = async(req,res)=>{
   
       let user= await User.findById(userId)
       const addresses=await Address.find({userId:userId})
-        res.render('showAddress',{addresses,user:user,isLogin: req.session.userId ? true : false})
+        res.render('showAddress',{addresses,user:user,isLogin: req.session.userId ? true : false,cartCount:req.session.userId ? req.session.cartCount : 0 })
     } catch (error) {
         console.log(error.message)
         res.render('500')
@@ -465,7 +477,7 @@ const verifyLogin = async(req,res)=>{
 const loadForgotPassword=async(req,res)=>{
   try {
     const userData=await User.findOne({_id:req.session.userId})
-    res.render('forgotPassword',{isLogin: req.session.userId ? true : false,user:userData})
+    res.render('forgotPassword',{isLogin: req.session.userId ? true : false,user:userData,cartCount:req.session.userId ? req.session.cartCount : 0 })
   } catch (error) {
     console.log(error.message)
     res.render('500')
@@ -595,7 +607,8 @@ const showOrderLoad = async (req, res) => {
       isLogin: userId ? true : false,
       orders,
       currentPage: page,
-      totalPages
+      totalPages,
+      cartCount:req.session.userId ? req.session.cartCount : 0 
     });
   } catch (error) {
     console.log(error.message);
@@ -607,25 +620,22 @@ const showOrderLoad = async (req, res) => {
 const showOrderDetails = async (req, res) => { 
   try {
     const orderId = req.params.orderId;
-    const userId = req.session.userId; // Assuming you're storing the logged-in user's ID in the session
-
-    // Find the order by ID and populate the necessary fields
+    const userId = req.session.userId; 
     const order = await Order.findById(orderId).populate("items.productId", 'name images price description discountPrice');
     
     if (!order) {
       return res.send("No order found");
     }
 
-    // Check if the logged-in user is the owner of the order
     if (order.userId.toString() !== userId.toString()) {
       return res.status(403).send("Unauthorized access to this order");
     }
 
-    // If authorized, render the order details page
     res.render("showOrderDetails", {
       isLogin: req.session.userId ? true : false,
       razorpayKey: process.env.RAZORPAY_KEY_ID,
-      order: order
+      order: order,
+      cartCount:req.session.userId ? req.session.cartCount : 0 
     });
   } catch (error) {
     console.log(error.message);
@@ -694,13 +704,13 @@ const cancelOrder=async(req,res)=>{
 }
 }
 
-// Get Wishlist
+
 const getWishlist = async (req, res) => {
   try {
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.redirect('/login'); // Redirect to login if no user session
+      return res.redirect('/login'); 
     }
 
     const user = await User.findById(userId).populate('wishlist');
@@ -708,7 +718,7 @@ const getWishlist = async (req, res) => {
     if (!user) {
       return res.status(404).send('User not found');
     }
-    res.render('addToWishlist', { isLogin: req.session.userId ? true : false, products: user.wishlist });
+    res.render('addToWishlist', { isLogin: req.session.userId ? true : false, products: user.wishlist,cartCount:req.session.userId ? req.session.cartCount : 0  });
   } catch (error) {
     console.log(error.message);
     res.render('500')
@@ -716,7 +726,7 @@ const getWishlist = async (req, res) => {
 };
 
 
-// Add to Wishlist
+
 const addToWishlist = async (req, res) => {
   const { productId } = req.body;
   const userId = req.session.userId;
@@ -789,7 +799,7 @@ const walletLoad = async(req,res)=>{
     const walletCount = await Wallet.countDocuments({userId:userId})
     const totalPages = Math.ceil(walletCount/itemPerPage)
     const wallet = await Wallet.find({userId:userId}).skip((currentPage-1)*itemPerPage).limit(itemPerPage).sort({date:-1})
-    res.render('wallet',{isLogin: req.session.userId ? true : false,wallet:wallet,razorpayKey: process.env.RAZORPAY_KEY_ID,currentPage:currentPage,totalPages:totalPages})
+    res.render('wallet',{isLogin: req.session.userId ? true : false,wallet:wallet,razorpayKey: process.env.RAZORPAY_KEY_ID,currentPage:currentPage,totalPages:totalPages,cartCount:req.session.userId ? req.session.cartCount : 0 })
   } catch (error) {
     console.log(error)
     res.render('500')

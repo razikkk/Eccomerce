@@ -46,6 +46,7 @@
                             <option value="pending" <% if (item.itemStatus === 'pending') { %> selected <% } %>>Pending</option>
                             <option value="shipped" <% if (item.itemStatus === 'shipped') { %> selected <% } %>>Shipped</option>
                             <option value="delivered" <% if (item.itemStatus === 'delivered') { %> selected <% } %>>Delivered</option>
+                            <option value="cancelled" <% if (item.itemStatus === 'cancelled') { %> selected <% } %>>cancelled</option>
                             <% if(item.returnStatus === 'requested'){%>
                                 <option value="approved">Approve Return</option>
                                 <option value="rejected">Reject Return</option>
@@ -141,10 +142,10 @@
             }).then(response => response.json())
               .then(data => {
                   if (data.success) {
-                      alert('Order status updated successfully!');
+                      Swal.fire('Order status updated successfully!');
                       location.reload();
                   } else {
-                      alert('Failed to update status.');
+                      Swal.fire('Failed to update status.');
                   }
               });
         };
@@ -165,10 +166,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Return status updated');
+                    Swal.fire('Return status updated');
                     location.reload();
                 } else {
-                    alert('Unable to update return status');
+                    Swal.fire('Unable to update return status');
                 }
             })
             .catch(error => {
@@ -177,6 +178,46 @@
         });
     });
 });
+
+async function confirmUpdateOrderStatus(itemId, newStatus, currentStatus) {
+    if (newStatus === currentStatus) {
+        // No status change, no need to update
+        return;
+    }
+
+    const orderId = '<%= order._id %>'; // Assuming `order._id` is available in the template context
+
+    if (newStatus === 'cancelled') {
+        // Confirm the cancellation action
+        const confirmation = confirm("Are you sure you want to cancel this order?");
+        if (!confirmation) {
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch(`/admin/orders/${orderId}/items/${itemId}/status`, {
+            method: 'PATCH', // Using PATCH method for partial updates
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Order status updated successfully.');
+            window.location.reload(); // Reload to reflect the status change
+        } else {
+            alert(`Failed to update status: ${data.message}`);
+        }
+
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        alert('An error occurred while updating the order status.');
+    }
+}
 </script>
 
 <%- include('../layout/adminlayout/footer') -%>
