@@ -117,7 +117,7 @@ const loadHomePage=async(req,res)=>{
 }
 const loginLoad=async(req,res)=>{
    try {
-         res.render('login',{isLogin: req.session.userId ? true : false})
+         res.render('Login',{isLogin: req.session.userId ? true : false})
    } catch (error) {
     console.log(error.message)
     res.render('500')
