@@ -184,7 +184,7 @@ const registerLoad = async (req, res) => {
 };
 const otp = async (req, res) => {
     try {
-      res.render("otp", { isLogin: false });
+      res.render("otp", { isLogin: false,cartCount:req.session.userId ? req.session.cartCount : 0 });
     } catch (error) {
       console.log(error.message)
       res.render('500')
