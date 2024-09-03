@@ -89,7 +89,7 @@ const createOrder = async (req, res) => {
             orderData.paymentStatus = "pending";
             await orderData.save();
             await Cart.deleteOne({ userId: req.session.userId });
-            res.json({ success: true, paymentStatus: 'COD' });
+            res.status(200).json({ success: true, paymentStatus: 'COD' });
         } else if (orderData.paymentMethod === 'RazorPay') {
             orderData.paymentStatus = "pending";
             orderData.items.forEach((elem)=>elem.itemStatus = "pending")

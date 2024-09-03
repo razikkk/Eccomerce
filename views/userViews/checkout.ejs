@@ -582,9 +582,10 @@ async function placeOrder() {
                     console.log('Server response:', data); 
 
                     if (data.success && data.paymentStatus == 'COD') {
-                        Swal.fire('Success', 'Order placed successfully!', 'success').then(() => {
-                            window.location.href = '/orderComplete';
-                        });
+                        console.log('hii');
+                        Swal.fire('Sucesss','Order placed successfully using cod','success').then(()=>{
+                            window.location.href='/orderComplete'
+                        })
                     }if(data.status == 'success' && data.paymentStatus == 'ONLINE-PAYMENT'){
                         razorpayPayment(data.newOrder)
                     }else if(data.success && data.paymentStatus == 'WALLET'){
@@ -593,15 +594,12 @@ async function placeOrder() {
                         })
 
                     }
-                    else {
-                        if (data.message === "Cannot place order in COD") {
+                } else {
+                    if (data.message === "Cannot place order in COD") {
                             Swal.fire('Error', 'Cash on Delivery is not available for orders above ₹1000', 'error');
                         } else {
-                            Swal.fire('Error', data.message || 'Failed to place order. Please try again.', 'error');
+                            Swal.fire('Error', data.message || 'Failed to placerrr order. Please try again.', 'error');
                         }
-                    }
-                } else {
-                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
             
         } catch (error) {
