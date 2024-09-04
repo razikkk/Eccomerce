@@ -149,13 +149,14 @@ const addProductOffer = async(req,res)=>{
         if(!productData){
             return res.status(404).json({success:false,message:"product  is not found"})
         }
-        const originalPrice = productData.price
-        const discountAmount = (originalPrice * percentage)/100
+        const originalPrice = productData.discountPrice
+        const discountAmount = originalPrice - (originalPrice * percentage)/100;
         const result = Math.ceil(discountAmount)
-        if(discountAmount > productData.discountPrice){
+        console.log('hello world',originalPrice,discountAmount, result);
+        
             productData.discountPrice = result
             await productData.save()
-        }
+        
 
 
         const newOffer = new productOffer({
@@ -175,20 +176,20 @@ const editProductOffer = async(req,res)=>{
     try {
         const {offerId,productId,percentage,expiryDate} = req.body
         if(!productId || !percentage || !expiryDate){
-            return res.status(404).json({success:false,message:"all fields are required"})
+            return res.status(404).json({success:false, message:"all fields are required"})
         }
 
         const productData = await Product.findById(productId)
         if(!productData){
-            return res.status(404).json({success:false,message:"product  is not found"})
+            return res.status(404).json({success:false, message:"product  is not found"})
         }
         const originalPrice = productData.price
         const discountAmount = (originalPrice * percentage)/100
         const result = Math.ceil(discountAmount)
-        if(discountAmount > productData.discountPrice){
+        
             productData.discountPrice = result
             await productData.save()
-        }
+        
         
         await productOffer.findByIdAndUpdate(offerId,{
             productId,
