@@ -34,6 +34,7 @@ const OrderDetailsLoad=async(req,res)=>{
 const updateOrderStatus = async (req, res) => {
     try {
         const { orderId, newStatus,itemId } = req.body;
+        console.log(newStatus,'gnhhb3456789');
         const order = await Order.findById(orderId);
        const item = order.items.id(itemId)
         if (order) {
@@ -42,7 +43,8 @@ const updateOrderStatus = async (req, res) => {
             }
             if (newStatus === 'approved') {
                 item.itemStatus = 'approved';
-                const product = await Product.findById(item.productId)
+                const product = await Product.findById(item.productId);
+                console.log(product,'ggytyty5356');
                 if(!product){
                   return res.status(404).json({success:false,message:"product not found"})
                 }
@@ -127,7 +129,7 @@ const updateOrderItemStatus = async (req, res) => {
     try {
         const { orderId, itemId } = req.params;
         const { status } = req.body;
-
+        console.log('345678gh',status)
         const order = await Order.findById(orderId);
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });

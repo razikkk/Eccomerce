@@ -87,7 +87,7 @@
     console.log(newStatusOrder);
 
 
-    if(currentStatus === 'Canceled'){
+    if(currentStatus === 'cancelled'){
         Swal.fire({
             icon: 'error',
             title: 'Update failed',
@@ -151,35 +151,35 @@
         };
 
     document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.item-status-select').forEach(select => {
-        select.addEventListener('change', function() {
-            const itemId = this.getAttribute('data-item-id');
-            const orderId = '<%= order._id %>'; // Ensure order ID is correctly passed
-            const action = this.value;
+    // document.querySelectorAll('.item-status-select').forEach(select => {
+    //     select.addEventListener('change', function() {
+    //         const itemId = this.getAttribute('data-item-id');
+    //         const orderId = '<%= order._id %>'; // Ensure order ID is correctly passed
+    //         const action = this.value;
 
-            fetch(`/admin/orders/returnOrder/${orderId}/${itemId}/${action}`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Return status updated');
-                    location.reload();
-                } else {
-                    Swal.fire('Unable to update return status');
-                }
-            })
-            .catch(error => {
-                console.error(error.message);
-            });
-        });
-    });
+    //         fetch(`/admin/orders/returnOrder/${orderId}/${itemId}/${action}`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 "Content-Type": "application/json"
+    //             }
+    //         })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (data.success) {
+    //                 Swal.fire('Return status updated');
+    //                 location.reload();
+    //             } else {
+    //                 Swal.fire('Unable to update return status');
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error(error.message);
+    //         });
+    //     });
+    // });
 });
 
-async function confirmUpdateOrderStatus(itemId, newStatus, currentStatus) {
+async function confirmUpdateOrderStatuse(itemId, newStatus, currentStatus) {
     if (newStatus === currentStatus) {
         // No status change, no need to update
         return;

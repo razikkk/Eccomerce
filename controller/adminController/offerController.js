@@ -22,6 +22,10 @@ const addCategoryOffer = async (req, res) => {
         if (!category) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        const catOffer = await categoryOffer.findOne({categoryId:categoryId})
+        if(catOffer){
+            return res.status(400).json({message:"offer for this already exist"})
+        }
 
       
 

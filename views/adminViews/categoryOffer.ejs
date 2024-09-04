@@ -22,7 +22,10 @@
                         <tr>
                             <td><%= offer.categoryId ? offer.categoryId.categoryName : 'n/a' %></td>
                             <td><%= offer.percentage %></td>
-                            <td class="text-danger"><%= new Date(offer.expiryDate).toLocaleDateString() %> </td>
+                            <td class="text-danger">
+                                <%= new Date(offer.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) %>
+                            </td>
+                            
                             <td>
                                 <label class="badge badge-warning editOfferButton" data-offer='<%= JSON.stringify(offer) %>'>Edit</label>
                                 <label class="badge badge-info deleteOfferButton" data-offer-id="<%=offer._id%>">Delete</label>
@@ -75,7 +78,7 @@
             <input type="hidden" id="editOfferId" name="offerId">
             <div class="form-group">
                 <label for="editCategory">Category:</label>
-                <select id="editCategory" name="category" required>
+                <select id="editCategory" name="category" disabled>
                     <% categories.forEach(category => { %>
                     <option value="<%= category._id %>"><%= category.categoryName %></option>
                     <% }); %>
@@ -332,18 +335,23 @@
             })
             .then(response => {
                 if (!response.ok) {
+                    console.log(response, 'jghj')
+                    showsnackbar('Offer already exist');
+
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.success) {
+                    console.log('234')
                     showsnackbar('Offer added successfully');
                     setTimeout(() => {
                         location.reload();
                     }, 1000);
                     addModal.style.display = 'none';
                 } else {
+                    console.log('sfd')
                     showsnackbar('Unable to add offer');
                 }
             })
