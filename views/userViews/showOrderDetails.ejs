@@ -180,6 +180,8 @@
         </div>
     </div>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         async function onPay(razorpayOrderId, amount) {
             try {
@@ -252,27 +254,51 @@
         }
 
         function cancelOrder(orderId, itemId) {
-            if (confirm("Are you sure you want to cancel this order?")) {
-                fetch(`/profile/showOrder/showOrderDetails/cancel/${orderId}/${itemId}`, {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "Do you really want to cancel this order?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, cancel it!',
+        cancelButtonText: 'No, keep it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/profile/showOrder/showOrderDetails/cancel/${orderId}/${itemId}`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire(
+                            'Cancelled!',
+                            'Your order has been cancelled.',
+                            'success'
+                        ).then(() => {
+                            location.reload()
+                        })
+                    } else {
+                        Swal.fire(
+                            'Failed!',
+                            'Unable to cancel the order. Please try again.',
+                            'error'
+                        )
                     }
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert("Order cancelled successfully")
-                            location.reload()
-                        } else {
-                            alert("Can't cancel Order. Please try again..")
-                        }
-                    })
-                    .catch(error => {
-                        console.log(error.message)
-                    })
-            }
+                .catch(error => {
+                    console.log(error.message)
+                    Swal.fire(
+                        'Error!',
+                        'Something went wrong. Please try again.',
+                        'error'
+                    )
+                })
         }
+    })
+}
+
         document.addEventListener('DOMContentLoaded', function () {
             var returnModal = document.getElementById("returnOrderModal");
             var closeReturnModalSpan = returnModal.querySelector(".close");

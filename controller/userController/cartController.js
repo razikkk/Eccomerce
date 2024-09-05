@@ -33,11 +33,12 @@ const addToCart=async(req,res)=>{
                 products: [{ productId: productId,quantity:quantity }],
                
             })
+            req.session.cartCount = 1
           
             await cartItem.save();
            
 
-            return res.json({ success: true });
+            return res.json({ success: true,  cartCount:req.session.userId ? req.session.cartCount : 0});
         } else {
             let flag = 0;
             alreadyInCart.products.forEach((item) => {
@@ -52,9 +53,12 @@ const addToCart=async(req,res)=>{
                     { userId: req.session.userId },
                     { $push: { products: { productId: productId } } }
                 )
-                if(req.session.cartCount){
-                    req.session.cartCount+=1
+                console.log(req.session.cartCount, "jjj")
+                if(req.session.cartCount > 0){
+                    console.log("ds")
+                    req.session.cartCount = req.session.cartCount + 1
                 }else{
+                    console.log("dss")
                     req.session.cartCount = 1
                 }
                 res.json({ success: true,message:'Product added to cart successfully',cartCount:req.session.userId ? req.session.cartCount : 0 })

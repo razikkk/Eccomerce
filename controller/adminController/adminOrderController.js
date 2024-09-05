@@ -22,7 +22,6 @@ const OrderDetailsLoad=async(req,res)=>{
     try {
        const orderId = req.params.orderId
        const order = await Order.findById(orderId).populate('items.productId').populate('userId')
-       console.log(order,'22334')
        if (!order) {
         return res.status(404).send('Order not found');
     }
@@ -41,17 +40,58 @@ const updateOrderStatus = async (req, res) => {
             if (item.itemStatus === 'cancelled') {
                 return res.json({ success: false, message: 'Order is already cancelled.' });
             }
+            if (newStatus === 'cancelled' && (order.status === 'pending' || item.itemStatus === 'ordered')) {
+                item.itemStatus = 'cancelled';
+                order.status = order.items.every(i => i.itemStatus === 'cancelled') ? 'cancelled' : order.status;
+    
+                const product = await Product.findById(item.productId);
+                if (!product) {
+                    return res.status(404).json({ success: false, message: "Product not found" });
+                }
+    
+                console.log(item.quantity,product.stock);
+                product.stock += item.quantity;
+                console.log(product.stock,'yyh');
+                await product.save();
+    
+                if (order.paymentMethod === 'RazorPay' || order.paymentMethod === 'wallet') {
+    
+                    const totalPrice = product.discountPrice * item.quantity;
+                    const userId = order.userId;  // Assuming `userId` is part of the order model
+                    let userWallet = await Wallet.findOne({ userId: userId });
+    
+                    if (!userWallet) {
+                        userWallet = new Wallet({
+                            userId,
+                            balance: totalPrice,
+                            transactions: [{
+                                type: 'credit',
+                                amount: totalPrice,
+                                description: 'Order canceled - refund added to wallet'
+                            }]
+                        });
+                    } else {
+                        userWallet.balance += totalPrice;
+                        userWallet.transactions.push({
+                            type: 'credit',
+                            amount: totalPrice,
+                            description: 'Order canceled - refund added to wallet'
+                        });
+                    }
+    
+                    await userWallet.save();
+                }
+            }
             if (newStatus === 'approved') {
                 item.itemStatus = 'approved';
                 const product = await Product.findById(item.productId);
-                console.log(product,'ggytyty5356');
                 if(!product){
                   return res.status(404).json({success:false,message:"product not found"})
                 }
                 // Find the user who placed the order
                 if (order.paymentMethod == 'RazorPay'|| order.paymentMethod == 'cod') {
                   const totalPrice = product.discountPrice * item.quantity;
-                  console.log(totalPrice)
+                  console.log(totalPrice,'tytty')
                   let userWallet = await Wallet.findOne({ userId: order.userId });
             
                  
@@ -65,9 +105,10 @@ const updateOrderStatus = async (req, res) => {
                   }
             
                   await userWallet.save();
-              }
-            
+            }
+            console.log(product.stock,item.quantity,'eiufh');
               product.stock += item.quantity;
+              console.log(product.stock,'uhu');
               await product.save();
               await order.save();
             }
@@ -83,7 +124,6 @@ const updateOrderStatus = async (req, res) => {
             return res.status(404).json({success:false,message:"order not found"})
         }
         
-        console.log(item)
 
     } catch (error) {
         console.log(error.message);
@@ -149,10 +189,13 @@ const updateOrderItemStatus = async (req, res) => {
                 return res.status(404).json({ success: false, message: "Product not found" });
             }
 
+            console.log(item.quantity,product.stock);
             product.stock += item.quantity;
+            console.log(product.stock,'yyh');
             await product.save();
 
             if (order.paymentMethod === 'RazorPay') {
+
                 const totalPrice = product.discountPrice * item.quantity;
                 const userId = order.userId;  // Assuming `userId` is part of the order model
                 let userWallet = await Wallet.findOne({ userId: userId });

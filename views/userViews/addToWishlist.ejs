@@ -176,12 +176,16 @@
 
        
         document.addEventListener('DOMContentLoaded', () => {
+            const cartCount = document.getElementById('cartCount')
+
         document.querySelectorAll('.btn-addtocart').forEach(button => {
             button.addEventListener('click', async (event) => {
-                event.preventDefault(); // Prevent default anchor behavior
+                event.preventDefault(); 
                 
                 try {
-                    const productId = button.getAttribute('data-product-id'); // Use the button variable
+                    const productId = button.getAttribute('data-product-id');
+                    console.log(cartCount, "fff");
+
 
                     const response = await fetch('/addToCart', {
                         method: 'POST',
@@ -201,6 +205,8 @@
                     if (!data.success) {
                         showsnackbar('Already In Cart');
                     } else {
+                        console.log(data, "jiooo");
+                        cartCount.innerText = data.cartCount
                         showsnackbar('Added To Cart');
                     }
 

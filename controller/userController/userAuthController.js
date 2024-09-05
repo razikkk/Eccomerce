@@ -108,6 +108,9 @@ const googleSuccess = async (req, res,next) => {
 const loadHomePage=async(req,res)=>{
     try {
       const bestSellers = await Product.find({isListed:false}).sort({sales:-1}).limit(10)
+      if(!req.session.cartCount){
+          req.session.cartCount = 0
+      }
 
         res.render('home',{isLogin: req.session.userId ? true : false,bestSellers,cartCount:req.session.userId ? req.session.cartCount : 0})
     } catch (error) {
@@ -290,7 +293,7 @@ const verifyLogin = async(req,res)=>{
         const cartDatas = await Cart.findOne({ userId:userData._id }).populate("products.productId");
         if(cartDatas){
         console.log(cartDatas, '88')
-        req.session.cartCount = cartDatas.products.length
+        req.session.cartCount = cartDatas.products.length ? cartDatas.products.length : 0 
         }
 
         

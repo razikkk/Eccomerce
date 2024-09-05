@@ -89,6 +89,7 @@ const createOrder = async (req, res) => {
             orderData.paymentStatus = "pending";
             await orderData.save();
             await Cart.deleteOne({ userId: req.session.userId });
+             req.session.cartCount = 0
             res.status(200).json({ success: true, paymentStatus: 'COD' });
         } else if (orderData.paymentMethod === 'RazorPay') {
             orderData.paymentStatus = "pending";
@@ -129,6 +130,7 @@ const createOrder = async (req, res) => {
                 orderData.paymentStatus = 'completed'
                 await orderData.save()
                 await Cart.deleteOne({userId:req.session.userId})
+                req.session.cartCount = 0
                 res.json({success:true,paymentStatus:'WALLET'})
             }else{
                 res.json({success:false,message:"Insuffient Balance"})
@@ -189,6 +191,7 @@ const verifyPayment = async (req, res) => {
 
             // Delete cart
             await Cart.deleteOne({ userId: userId });
+             req.session.cartCount=0
 
             res.json({ status: 'success', paymentStatus: 'ONLINE-PAYMENT-SUCCESS' });
         } else {
